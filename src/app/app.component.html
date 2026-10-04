@@ -180,17 +180,13 @@
 
     <!-- Glass Sidebar -->
     <aside class="w-64 glass-nav fixed inset-y-0 left-0 z-50 md:static transition-transform duration-300 flex flex-col justify-between border-r border-slate-200/50 dark:border-white/10"
-           [class.-translate-x-full]="!sidebarOpen" [class.translate-x-0]="sidebarOpen" [class.md:translate-x-0]="true"
-           [class.md:w-20]="sidebarCollapsed" [class.sidebar-collapsed]="sidebarCollapsed">
+           [class.-translate-x-full]="!sidebarOpen" [class.translate-x-0]="sidebarOpen" [class.md:translate-x-0]="true">
         <div class="sidebar-body p-6 flex-1 min-h-0 overflow-y-auto">
             <div class="flex items-center justify-between mb-8">
                 <div class="sidebar-logo flex items-center space-x-3">
                     <div class="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-2xl text-white shadow-md shadow-indigo-500/30"><i class="fa-solid fa-cubes text-lg"></i></div>
                     <span class="sidebar-brand text-xl font-black tracking-tight text-slate-900 dark:text-white">Asset<span class="text-indigo-500">Flow</span></span>
                 </div>
-                <button type="button" (click)="toggleCollapse()" class="hidden md:flex w-8 h-8 items-center justify-center rounded-lg border border-slate-300/60 dark:border-white/10 text-slate-500 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10 transition" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Use compact sidebar'" [title]="sidebarCollapsed ? 'Expand sidebar' : 'Use compact sidebar'">
-                    <i class="fa-solid" [ngClass]="sidebarCollapsed ? 'fa-angles-right' : 'fa-angles-left'" aria-hidden="true"></i>
-                </button>
                 <button (click)="toggleSidebar()" class="text-slate-400 md:hidden"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <nav class="space-y-1.5" aria-label="Main navigation" (dragover)="allowNavDrop($event)" (drop)="dropNavAtEnd($event, 'main')">

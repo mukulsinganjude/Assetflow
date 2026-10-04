@@ -374,7 +374,6 @@ export class AppComponent {
   forgotOpen = false;
 
   sidebarOpen = false;
-  sidebarCollapsed = false;
   assetsMenuOpen = true;
   profileOpen = false;
   profileMenuOpen = false;
@@ -442,7 +441,7 @@ export class AppComponent {
     public presence: PresenceService,
     private router: Router
   ) {
-    this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder(); this.loadSidebarMode();
+    this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder();
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.presence.start();
@@ -473,11 +472,6 @@ export class AppComponent {
     return [...this.visibleAssetChildren()].sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999));
   }
   private sidebarPreferenceKey() { return `assetflow_sidebar_order_${this.auth.currentUser()?.username || 'guest'}`; }
-  private sidebarModeKey() { return `assetflow_sidebar_mode_${this.auth.currentUser()?.username || 'guest'}`; }
-  private loadSidebarMode() {
-    try { this.sidebarCollapsed = localStorage.getItem(this.sidebarModeKey()) === 'compact'; }
-    catch { this.sidebarCollapsed = false; }
-  }
   private loadSidebarOrder() {
     this.sidebarOrder = [...this.defaultSidebarOrder];
     this.assetChildOrder = [...this.defaultAssetChildOrder];
@@ -495,7 +489,6 @@ export class AppComponent {
       this.draggedNav = null;
       return;
     }
-    this.sidebarCollapsed = false;
     this.sidebarOpen = true;
     this.assetsMenuOpen = true;
     this.sidebarEditMode = true;
@@ -593,7 +586,6 @@ export class AppComponent {
     this.loadNotificationReadState();
     this.loadNotificationDismissState();
     this.loadSidebarOrder();
-    this.loadSidebarMode();
     this.router.navigate(['/dashboard']);
   }
 
@@ -606,11 +598,6 @@ export class AppComponent {
   togglePass() { this.showPass = !this.showPass; }
   toggleTheme() { this.theme.toggle(); }
   toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
-  toggleCollapse() {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-    try { localStorage.setItem(this.sidebarModeKey(), this.sidebarCollapsed ? 'compact' : 'expanded'); }
-    catch { this.ui.error('Could not save sidebar mode in this browser.'); }
-  }
   toggleAssetsMenu() { this.assetsMenuOpen = !this.assetsMenuOpen; }
   isAssetsRouteActive() { return ['/entry', '/desk-setup', '/consumables'].some(path => this.router.url.split('?')[0].startsWith(path)); }
 
