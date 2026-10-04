@@ -28,6 +28,60 @@ export class AppComponent {
   guideMobileNavOpen = false;
   selectedGuideTab = 'Dashboard';
   guideSearch = signal('');
+  readonly websiteWorkflowTree = [
+    'Open AssetFlow',
+    '└── Sign in with company email and password',
+    '    ├── Login succeeds',
+    '    │   ├── Dashboard — overview and shortcuts',
+    '    │   ├── Assets',
+    '    │   │   ├── Asset Entry — add, edit, assign, import, export assets',
+    '    │   │   ├── Desk Setup — track equipment by desk',
+    '    │   │   └── Consumables — track quantities, thresholds, and adjustments',
+    '    │   ├── Employees — find people and view assigned equipment',
+    '    │   │   └── Employee details — equipment, history, and comments',
+    '    │   ├── Manage Employees [admin] — maintain the employee directory',
+    '    │   ├── Offboarding Returns — checklist and equipment return workflow',
+    '    │   ├── Former Employees — completed departures and saved records',
+    '    │   ├── Dell Cases — support cases associated with equipment',
+    '    │   ├── Warranty & Forecast — coverage dates and warranty updates',
+    '    │   ├── Links — shared work links',
+    '    │   ├── Activity Trail — searchable audit history',
+    '    │   ├── User Roles [admin] — accounts, roles, and user-specific access',
+    '    │   ├── Global header — online tracker, notifications, and profile',
+    '    │   └── Help button — tab guide, examples, field snapshots, and notes',
+    '    └── Login fails',
+    '        └── Show an error; check company email, password, and API availability'
+  ].join('\n');
+  readonly guideNavigationTree = [
+    {
+      title: 'Login succeeds', icon: 'fa-circle-check', detail: 'Continue into AssetFlow. Your role and individual permissions determine which screens and actions are available.',
+      children: [
+        { title: 'Dashboard', detail: 'Asset overview and shortcuts.', icon: 'fa-chart-pie', children: [] },
+        { title: 'Assets', detail: 'Track equipment and supplies.', icon: 'fa-boxes-stacked', children: [
+          { title: 'Asset Entry', detail: 'Add, edit, assign, import, and export assets.', icon: 'fa-circle-plus' },
+          { title: 'Desk Setup', detail: 'Track equipment installed at a desk.', icon: 'fa-desktop' },
+          { title: 'Consumables', detail: 'Track quantities, thresholds, and stock adjustments.', icon: 'fa-boxes-stacked' }
+        ] },
+        { title: 'Employees', detail: 'Find people and view assigned equipment.', icon: 'fa-users', children: [
+          { title: 'Employee details', detail: 'Review equipment, history, and comments.', icon: 'fa-user' }
+        ] },
+        { title: 'Manage Employees · Admin', detail: 'Maintain the employee directory.', icon: 'fa-user-gear', children: [] },
+        { title: 'Offboarding Returns', detail: 'Run checklists and record equipment returns.', icon: 'fa-clipboard-check', children: [] },
+        { title: 'Former Employees', detail: 'Review completed departures and saved records.', icon: 'fa-box-archive', children: [] },
+        { title: 'Dell Cases', detail: 'Track support cases associated with equipment.', icon: 'fa-screwdriver-wrench', children: [] },
+        { title: 'Warranty & Forecast', detail: 'Review coverage dates and warranty updates.', icon: 'fa-shield-halved', children: [] },
+        { title: 'Links', detail: 'Open shared work resources.', icon: 'fa-link', children: [] },
+        { title: 'Activity Trail', detail: 'Review searchable audit history.', icon: 'fa-clock-rotate-left', children: [] },
+        { title: 'User Roles · Admin', detail: 'Manage accounts, roles, and individual access.', icon: 'fa-user-shield', children: [] },
+        { title: 'Global header', detail: 'Online tracker, notifications, and profile.', icon: 'fa-bars', children: [] },
+        { title: 'Help button', detail: 'Tab guide, examples, field snapshots, and useful notes.', icon: 'fa-circle-question', children: [] }
+      ]
+    },
+    {
+      title: 'Login fails', icon: 'fa-circle-exclamation', detail: 'AssetFlow displays a sign-in error.',
+      children: [{ title: 'Check sign-in', detail: 'Confirm the company email and password, then check API availability if the error continues.', icon: 'fa-key', children: [] }]
+    }
+  ];
   readonly guideSections = [
     { title: 'Dashboard', icon: 'fa-chart-pie', access: 'Everyone', description: 'View the asset overview, current assignments, upcoming warranty dates, and quick actions.', steps: 'Use the search and filters to find equipment. Select an asset to view its details or start a check-in or check-out.' },
     { title: 'Asset Entry', icon: 'fa-circle-plus', access: 'Admins and data-entry users', description: 'Add assets to inventory, update their details, or import asset records.', steps: 'Choose Add Asset, complete the required fields (especially category, model, and serial number), then save. Use the import template for bulk uploads.' },
@@ -168,7 +222,7 @@ export class AppComponent {
 
   private guideSearchText(title: string): string {
     if (title === 'Workflow map') {
-      return ['Workflow map', ...this.guideWorkflowRows.flatMap(row => [row.title, row.flow, row.detail]), ...this.guideWorkflowGroups.map(group => group.title), ...this.guideScreenGroups.flatMap(group => [group.title, ...group.items.flatMap(item => [item.name, item.purpose, item.workflow])]), ...this.guideCommonTasks.flatMap(task => [task.title, ...task.steps]), ...this.guideReferenceNotes, ...this.guideSupportPaths.flatMap(path => [path.problem, path.next]), ...(this.guideStepLists['Workflow map'] || [])].join(' ').toLowerCase();
+      return ['Workflow map', this.websiteWorkflowTree, ...this.guideWorkflowRows.flatMap(row => [row.title, row.flow, row.detail]), ...this.guideWorkflowGroups.map(group => group.title), ...this.guideScreenGroups.flatMap(group => [group.title, ...group.items.flatMap(item => [item.name, item.purpose, item.workflow])]), ...this.guideCommonTasks.flatMap(task => [task.title, ...task.steps]), ...this.guideReferenceNotes, ...this.guideSupportPaths.flatMap(path => [path.problem, path.next]), ...(this.guideStepLists['Workflow map'] || [])].join(' ').toLowerCase();
     }
     if (title === 'Role permissions') {
       return ['Role permissions', ...this.rolePermissionRows.flatMap(row => [row.section, row.admin, row.entry, row.viewer]),
