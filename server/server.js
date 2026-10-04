@@ -11,6 +11,7 @@ const { clean, cleanMultiline, validateAsset, isValidDate, validateConsumable } 
 const app = express();
 const allowedBrowserOrigins = new Set([
   'https://assetflow-it.netlify.app',
+  'https://assetflowit.netlify.app',
   ...(process.env.ASSETFLOW_CORS_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean)
 ]);
 const isLocalDevelopmentOrigin = origin => {
