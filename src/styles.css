@@ -220,6 +220,8 @@ html:not(.dark) .text-blue-400:not(i)    { color: #2563eb !important; }  /* blue
 /* keyframes duplicated here so they work even before Tailwind CDN evaluates.
    Keep these in sync with tailwind.config.js keyframes (esp. fadeIn's rise). */
 @keyframes fadeIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+.assetflow-shell-enter { animation: assetflowShellFadeIn .4s ease-out both; }
+@keyframes assetflowShellFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
 
 /* =====================================================================
@@ -790,7 +792,7 @@ html:not(.dark) .assetflow-shell .custom-select-trigger {
 @media (max-width: 767px) {
     .assetflow-shell .assetflow-mobile-backdrop { top: 3.5rem !important; }
     .assetflow-shell aside { top: 3.5rem !important; bottom: 0 !important; }
-    .assetflow-shell { height: 100dvh !important; }
+    .assetflow-shell { height: 100dvh !important; min-height: 100vh !important; }
     .assetflow-shell .overflow-x-auto {
         max-width: 100%; -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain; scrollbar-width: thin;
@@ -1160,7 +1162,7 @@ html:not(.dark) .assetflow-shell .assetflow-mobile-backdrop,
 @media (max-width: 767px) {
     .assetflow-shell .assetflow-mobile-backdrop { top: 3.5rem !important; background: rgba(0,0,0,.54) !important; }
     .assetflow-shell aside { top: 3.5rem !important; bottom: 0 !important; }
-    .assetflow-shell { height: 100dvh !important; }
+    .assetflow-shell { height: 100dvh !important; min-height: 100vh !important; }
     .assetflow-shell .sidebar-footer { margin-top: auto !important; }
 }
 
