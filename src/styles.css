@@ -220,8 +220,6 @@ html:not(.dark) .text-blue-400:not(i)    { color: #2563eb !important; }  /* blue
 /* keyframes duplicated here so they work even before Tailwind CDN evaluates.
    Keep these in sync with tailwind.config.js keyframes (esp. fadeIn's rise). */
 @keyframes fadeIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
-.assetflow-shell-enter { animation: assetflowShellFadeIn .4s ease-out both; }
-@keyframes assetflowShellFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
 
 /* =====================================================================
