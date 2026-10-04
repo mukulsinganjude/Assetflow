@@ -1,0 +1,324 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/50 p-6 rounded-3xl border border-indigo-500/20 shadow-lg relative overflow-hidden glass-card">
+    <div class="relative z-10">
+      <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white tracking-[-0.04em] leading-tight"><i class="fa-solid fa-sparkles dashboard-welcome-icon" aria-hidden="true"></i> Welcome back, <span class="dashboard-welcome-name">{{ auth.currentUser()?.displayName || auth.currentUser()?.username || 'there' }}</span></h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Please see the analysis below for an overview of your asset fleet.</p>
+    </div>
+    <button (click)="exportExcel()" class="bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-2xl font-semibold flex items-center space-x-2 transition text-xs shadow-lg shadow-emerald-600/25 w-full sm:w-auto justify-center">
+      <i class="fa-solid fa-file-arrow-down"></i>
+      <span>Export Excel Filtered Fleet</span>
+    </button>
+  </div>
+
+  <div class="dashboard-kpi-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+    <div class="dashboard-kpi-card glass-card p-6 rounded-3xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Registered</p>
+        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-1">{{ stats().total }}</h3>
+        <span class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold px-2 py-0.5 rounded-full"
+              [ngClass]="trends().addedThisWeek > 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'">
+          <i class="fa-solid" [ngClass]="trends().addedThisWeek > 0 ? 'fa-arrow-trend-up' : 'fa-minus'"></i>
+          {{ trends().addedThisWeek > 0 ? '+' + trends().addedThisWeek + ' this week' : 'No new this week' }}
+        </span>
+      </div>
+      <div class="bg-indigo-500/15 text-indigo-500 p-4 rounded-2xl"><i class="fa-solid fa-laptop-code text-xl"></i></div>
+    </div>
+    <div class="dashboard-kpi-card glass-card p-6 rounded-3xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deployed (In Use)</p>
+        <h3 class="text-3xl font-black text-emerald-500 mt-1">{{ stats().inUse }}</h3>
+        <span class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500">
+          <i class="fa-solid fa-chart-simple"></i>{{ trends().inUsePct }}% of fleet
+        </span>
+      </div>
+      <div class="bg-emerald-500/15 text-emerald-500 p-4 rounded-2xl"><i class="fa-solid fa-circle-check text-xl"></i></div>
+    </div>
+    <div class="dashboard-kpi-card glass-card p-6 rounded-3xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Warehouse Storage</p>
+        <h3 class="text-3xl font-black text-amber-500 mt-1">{{ stats().storage }}</h3>
+        <span class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500">
+          <i class="fa-solid fa-chart-simple"></i>{{ trends().storagePct }}% of fleet
+        </span>
+      </div>
+      <div class="bg-amber-500/15 text-amber-500 p-4 rounded-2xl"><i class="fa-solid fa-boxes-packing text-xl"></i></div>
+    </div>
+    <div class="dashboard-kpi-card glass-card p-6 rounded-3xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Under Repair</p>
+        <h3 class="text-3xl font-black text-rose-500 mt-1">{{ stats().repair }}</h3>
+        <span class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold px-2 py-0.5 rounded-full"
+              [ngClass]="trends().repairPct > 0 ? 'bg-rose-500/15 text-rose-400' : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'">
+          <i class="fa-solid fa-chart-simple"></i>{{ trends().repairPct }}% of fleet
+        </span>
+      </div>
+      <div class="bg-rose-500/15 text-rose-400 p-4 rounded-2xl"><i class="fa-solid fa-wrench text-xl"></i></div>
+    </div>
+  </div>
+
+  <div class="dashboard-chart-card glass-card p-5 sm:p-6 rounded-3xl">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fleet Status by Department (Filtered)</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Asset counts · hover over a department for details</p>
+      </div>
+      <i class="fa-solid fa-chart-line text-emerald-500" aria-hidden="true"></i>
+    </div>
+    <div class="relative w-full h-[220px] sm:h-[250px]">
+      <canvas id="departmentTrendChart" role="img" aria-label="Line chart of in-use, in-storage, and under-repair asset counts across departments"></canvas>
+      <p *ngIf="stats().total === 0" class="absolute inset-0 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 pointer-events-none">No assets match the current filters.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="dashboard-chart-card glass-card p-6 rounded-3xl flex flex-col items-center">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 w-full text-left">Category Distribution (Filtered)</h3>
+      <div class="w-full h-[200px] flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
+    </div>
+
+    <div class="dashboard-chart-card glass-card p-6 rounded-3xl flex flex-col items-center">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 w-full text-left">Department Allocation (Filtered)</h3>
+      <div class="w-full max-w-[240px] h-[200px] flex items-center justify-center"><canvas id="departmentChart"></canvas></div>
+    </div>
+  </div>
+
+  <div *ngIf="canSelect && selected().size > 0" class="glass-card bg-indigo-950/90 border-indigo-500/40 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl animate-slide-up z-40 relative">
+    <div class="text-xs font-bold text-indigo-200">
+      <span class="bg-indigo-600 text-white px-2.5 py-1 rounded-xl mr-1.5 shadow-md">{{ selected().size }}</span> items selected
+    </div>
+    <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
+      <div class="w-44">
+        <app-custom-select [options]="bulkOptions" [value]="bulkStatus()" (valueChange)="bulkStatus.set($event)"></app-custom-select>
+      </div>
+      <button (click)="applyBulkStatus()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-md">Apply</button>
+      <button *ngIf="canDelete" (click)="bulkDelete()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-md">Delete</button>
+    </div>
+  </div>
+
+  <div class="glass-card p-5 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 z-30 relative">
+    <div class="relative w-full md:w-80">
+      <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+      <input type="text" [ngModel]="search()" (ngModelChange)="search.set($event); onSearch()" placeholder="Search serial, user or model..." class="glass-input w-full pl-11 pr-4 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white transition">
+    </div>
+    <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
+      <div class="flex items-center space-x-2 w-full sm:w-auto justify-between">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Category:</label>
+        <div class="w-44"><app-custom-select [options]="categoryOptions" [value]="categoryFilter()" (valueChange)="categoryFilter.set($event); onFilter()"></app-custom-select></div>
+      </div>
+      <div class="flex items-center space-x-2 w-full sm:w-auto justify-between">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Dept:</label>
+        <div class="w-44"><app-custom-select [options]="deptOptions" [value]="deptFilter()" (valueChange)="deptFilter.set($event); onFilter()"></app-custom-select></div>
+      </div>
+      <div class="flex items-center gap-1 rounded-xl border border-slate-200/60 dark:border-white/10 p-1" role="group" aria-label="Asset row density">
+        <button type="button" (click)="setDensity('compact')" [attr.aria-pressed]="density() === 'compact'" [ngClass]="density() === 'compact' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'" class="px-2.5 py-2 rounded-lg text-[11px] font-semibold transition whitespace-nowrap"><i class="fa-solid fa-bars-staggered mr-1" aria-hidden="true"></i>Compact</button>
+        <button type="button" (click)="setDensity('detailed')" [attr.aria-pressed]="density() === 'detailed'" [ngClass]="density() === 'detailed' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'" class="px-2.5 py-2 rounded-lg text-[11px] font-semibold transition whitespace-nowrap"><i class="fa-solid fa-list mr-1" aria-hidden="true"></i>Detailed</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-card rounded-3xl z-10 relative">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[750px]">
+        <thead>
+          <tr class="bg-white/30 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="p-4 w-10">
+              <input *ngIf="canSelect" type="checkbox" (change)="toggleAll($any($event.target).checked)" class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500">
+            </th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('name')">Model / Description <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('category')">Category <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('department')">Department <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('serial')">Serial / Tag <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('assignedTo')">Assigned Staff <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition whitespace-nowrap" (click)="sort('status')">Status <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 text-center whitespace-nowrap">QR Tag</th>
+            <th class="p-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <!-- Loading skeletons on first fetch -->
+          <tr *ngIf="data.assetsLoading()" class="animate-pulse">
+            <td colspan="9" class="p-0">
+              <div class="divide-y divide-slate-200/40 dark:divide-white/5">
+                <div *ngFor="let s of [1,2,3,4,5]" class="flex items-center gap-4 p-4">
+                  <div class="w-4 h-4 rounded bg-slate-200/70 dark:bg-white/10"></div>
+                  <div class="h-3 rounded-full bg-slate-200/70 dark:bg-white/10 flex-1 max-w-[220px]"></div>
+                  <div class="h-3 rounded-full bg-slate-200/70 dark:bg-white/10 w-20"></div>
+                  <div class="h-3 rounded-full bg-slate-200/70 dark:bg-white/10 w-24"></div>
+                  <div class="h-5 rounded-full bg-slate-200/70 dark:bg-white/10 w-20 ml-auto"></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Friendly empty state -->
+          <tr *ngIf="!data.assetsLoading() && pageResult().sliced.length === 0">
+            <td colspan="9" class="p-10 text-center">
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl">
+                  <i class="fa-solid" [ngClass]="data.assets().length === 0 ? 'fa-boxes-stacked' : 'fa-magnifying-glass'"></i>
+                </div>
+                <div *ngIf="data.assets().length === 0" class="space-y-1">
+                  <p class="text-sm font-bold text-slate-700 dark:text-slate-200">No equipment yet</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Register your first asset from the Asset Entry page to see it here.</p>
+                  <a *ngIf="canAdd" routerLink="/entry" class="inline-flex items-center gap-1.5 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-md"><i class="fa-solid fa-plus"></i> Add an asset</a>
+                </div>
+                <div *ngIf="data.assets().length > 0" class="space-y-1">
+                  <p class="text-sm font-bold text-slate-700 dark:text-slate-200">No matches</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">No equipment matches your current search or filters. Try clearing them.</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let item of pageResult().sliced" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="w-10">
+              <input *ngIf="canSelect" type="checkbox" [checked]="isSelected(item.id)" (change)="toggleRow(item.id, $any($event.target).checked)" class="rounded border-slate-700 text-indigo-600">
+            </td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="font-bold text-slate-900 dark:text-white"><div class="flex items-center gap-2"><i class="fa-solid shrink-0" [ngClass]="categoryIcon(item.category)"></i><div class="min-w-0"><span>{{ item.name }}</span><p *ngIf="density() === 'detailed'" class="text-[10px] leading-4 font-normal text-slate-500 dark:text-slate-400">Purchased {{ item.purchaseDate || 'date not recorded' }} · Warranty {{ item.warrantyDate || 'not recorded' }}</p></div></div></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="text-slate-600 dark:text-slate-400 text-xs font-semibold">{{ item.category }}</td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'"><span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-xl text-xs font-bold">{{ item.department || 'IT' }}</span></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="text-indigo-500 font-mono text-xs">{{ item.serial }} <span class="text-slate-400 dark:text-slate-500 font-sans text-[10px]">({{ item.assignmentType || 'Primary' }})</span></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'"><a *ngIf="item.assignedTo && item.assignedTo !== 'Stock'" [routerLink]="['/employees', item.assignedTo]" class="hover:text-indigo-400 transition" title="View employee">{{ item.assignedTo }}</a><span *ngIf="!item.assignedTo || item.assignedTo === 'Stock'" class="text-slate-500 italic">Stock</span></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'"><span class="inline-flex items-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-bold" [ngClass]="statusBadge(item.status)">{{ item.status }}<ng-container *ngIf="data.repairCaseIndicator(item) as caseIndicator"><button *ngIf="caseIndicator === 'open'" type="button" (click)="openDellCase(data.repairCaseId(item), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-emerald-500 hover:ring-4 hover:ring-emerald-500/20" title="Open linked Dell case" aria-label="Open linked Dell case"></button><button *ngIf="caseIndicator === 'resolved'" type="button" (click)="openDellCase(data.repairCaseId(item), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-purple-500 hover:ring-4 hover:ring-purple-500/20" title="Open resolved Dell case" aria-label="Open resolved Dell case"></button><button *ngIf="caseIndicator === 'missing'" type="button" (click)="openDellCaseForAsset(item, $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-red-500 hover:ring-4 hover:ring-red-500/20" title="Raise Dell case for this asset" aria-label="Raise Dell case for this asset"></button></ng-container></span></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="text-center">
+              <button (click)="showQr(item.name, item.serial)" class="text-indigo-400 hover:text-indigo-300 transition" title="Show QR Badge"><i class="fa-solid fa-qrcode text-base"></i></button>
+            </td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'px-4 py-4'" class="text-center whitespace-nowrap">
+              <button (click)="openDetail(item)" class="text-slate-400 hover:text-indigo-400 transition" title="Asset Details" aria-label="Asset Details"><i class="fa-solid fa-eye"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 relative z-20">
+      <div class="flex items-center space-x-2">
+        <span>Rows per page:</span>
+        <div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div>
+        <span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40 disabled:hover:text-inherit">Previous</button>
+        <span class="px-2 font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span>
+        <button (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40 disabled:hover:text-inherit">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Asset detail / edit modal -->
+<div *ngIf="assetModalOpen()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">
+  <div class="glass-card max-w-lg w-full p-8 rounded-3xl shadow-2xl relative animate-slide-up space-y-5">
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-indigo-500/15 text-indigo-400 rounded-2xl flex items-center justify-center text-xl">
+        <i class="fa-solid" [ngClass]="modalMode() === 'edit' ? 'fa-pen-to-square' : 'fa-circle-info'"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ modalMode() === 'edit' ? 'Edit Asset' : 'Asset Details' }}</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ modalMode() === 'edit' ? 'Update the fields and save your changes.' : 'Read-only view of this hardware record.' }}</p>
+      </div>
+    </div>
+
+    <!-- VIEW MODE -->
+    <div *ngIf="modalMode() === 'view' && viewAsset as v" class="glass-card rounded-2xl p-4 space-y-2 text-xs">
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Item Model</span><span class="font-semibold">{{ v.name }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Category</span><span class="font-semibold">{{ v.category }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Department</span><span class="font-semibold">{{ v.department }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Serial / Tag</span><span class="font-mono text-indigo-400 font-bold">{{ v.serial }} <span class="font-sans text-slate-400 dark:text-slate-500 text-xs">({{ v.assignmentType || 'Primary' }})</span></span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Assigned To</span><a *ngIf="v.assignedTo && v.assignedTo !== 'Stock'; else unassignedTo" [routerLink]="['/employees', v.assignedTo]" (click)="closeAssetModal()" class="font-semibold text-indigo-400 hover:underline">{{ v.assignedTo }}</a><ng-template #unassignedTo><span class="font-semibold">Stock</span></ng-template></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Status</span><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold" [ngClass]="statusBadge(v.status)">{{ v.status }}<ng-container *ngIf="data.repairCaseIndicator(v) as caseIndicator"><button *ngIf="caseIndicator === 'open'" type="button" (click)="openDellCase(data.repairCaseId(v), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-emerald-500 hover:ring-4 hover:ring-emerald-500/20" title="Open linked Dell case" aria-label="Open linked Dell case"></button><button *ngIf="caseIndicator === 'resolved'" type="button" (click)="openDellCase(data.repairCaseId(v), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-purple-500 hover:ring-4 hover:ring-purple-500/20" title="Open resolved Dell case" aria-label="Open resolved Dell case"></button><button *ngIf="caseIndicator === 'missing'" type="button" (click)="openDellCaseForAsset(v, $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-red-500 hover:ring-4 hover:ring-red-500/20" title="Raise Dell case for this asset" aria-label="Raise Dell case for this asset"></button></ng-container></span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Purchase Date</span><span>{{ v.purchaseDate }}</span></div>
+      <div class="flex justify-between py-1"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Warranty Expiry</span><span class="font-semibold text-indigo-400">{{ v.warrantyDate }}</span></div>
+    </div>
+
+    <!-- COMMENTS (view mode) -->
+    <div *ngIf="modalMode() === 'view'" class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-comments text-indigo-400"></i> Comments
+          <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-500/15 px-2 py-0.5 rounded-full">{{ liveComments().length }}</span>
+        </h4>
+      </div>
+
+      <div class="max-h-48 overflow-y-auto space-y-2.5 pr-1">
+        <p *ngIf="liveComments().length === 0" class="text-xs text-slate-500 dark:text-slate-400 italic py-2">No comments yet. {{ canComment ? 'Be the first to add one.' : '' }}</p>
+        <div *ngFor="let c of liveComments()" class="glass-card rounded-2xl p-3">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{{ c.user.charAt(0) }}</div>
+              <span class="text-xs font-bold text-slate-800 dark:text-white truncate">{{ c.user }}</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">· {{ commentTime(c.ts) }}</span>
+            </div>
+            <button *ngIf="canDeleteComment(c)" (click)="deleteComment(c.id)" class="text-slate-400 hover:text-rose-400 transition shrink-0 ml-2" title="Delete comment"><i class="fa-solid fa-trash-can text-xs"></i></button>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">{{ c.text }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="canComment" class="flex items-end gap-2">
+        <textarea [ngModel]="newComment()" (ngModelChange)="newComment.set($event)" rows="2" maxlength="500" placeholder="Add a comment..." class="glass-input flex-1 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white resize-none"></textarea>
+        <app-emoji-picker [text]="newComment()" (textChange)="newComment.set($event)"></app-emoji-picker>
+        <button (click)="addComment()" [disabled]="commentSaving() || !newComment().trim()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-lg disabled:opacity-50 shrink-0">
+          <i class="fa-solid" [ngClass]="commentSaving() ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- EDIT MODE -->
+    <form *ngIf="modalMode() === 'edit'" (submit)="$event.preventDefault(); saveEdit()" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Category</label>
+          <app-custom-select [options]="editCategoryOptions" [value]="eCategory()" (valueChange)="onEditCategoryChange($event)"></app-custom-select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Item Model / Name</label>
+          <app-custom-select [options]="editModelOptions()" [value]="eName()" (valueChange)="eName.set($event)"></app-custom-select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Department</label>
+          <app-custom-select [options]="editDeptOptions" [value]="eDepartment()" (valueChange)="eDepartment.set($event)"></app-custom-select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Status</label>
+          <app-custom-select [options]="editStatusOptions" [value]="eStatus()" (valueChange)="onEditStatusChange($event)"></app-custom-select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Serial Number / Tag</label>
+          <input type="text" [(ngModel)]="eSerial" name="eSerial" class="glass-input w-full rounded-2xl px-4 py-3 text-sm focus:outline-none dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Assigned To</label>
+          <app-autocomplete [options]="assignableEmployees()" [value]="eAssignedTo" [clearable]="false" [allowCustom]="false" (valueChange)="onEditAssignedChange($event)" placeholder="Employee Name or Stock"></app-autocomplete>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Assignment Type</label>
+          <app-custom-select [options]="assignmentTypeOptions" [value]="eAssignmentType()" (valueChange)="setEditAssignmentType($event)"></app-custom-select>
+        </div>
+      </div>
+      <div *ngIf="eAssignmentType() === 'Primary' && primaryAssetConflicts(eCategory(), eAssignedTo).length" role="status" class="rounded-2xl border border-amber-400/40 bg-amber-50 dark:bg-amber-400/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200">
+        <i class="fa-solid fa-circle-info mr-1.5" aria-hidden="true"></i>Saving this as Primary will automatically change {{ primaryAssetConflicts(eCategory(), eAssignedTo).length }} other {{ eCategory() }} asset(s) assigned to {{ eAssignedTo }} to Temporary.
+      </div>
+    </form>
+
+    <div *ngIf="modalError()" class="flex items-center gap-2 text-xs font-semibold text-rose-500 bg-rose-500/10 border border-rose-500/30 rounded-2xl px-4 py-3">
+      <i class="fa-solid fa-triangle-exclamation"></i><span>{{ modalError() }}</span>
+    </div>
+
+    <p *ngIf="modalMode() === 'edit'" class="text-[11px] text-slate-500 dark:text-slate-400 -mt-1">Purchase &amp; warranty dates are managed in the Warranty &amp; Predictive Forecasting module.</p>
+
+    <div class="flex space-x-3 pt-2">
+      <button type="button" (click)="closeAssetModal()" [disabled]="modalSaving()" class="flex-1 glass-card py-3 rounded-2xl text-xs font-semibold disabled:opacity-40">Close</button>
+      <button *ngIf="modalMode() === 'view' && canEdit" type="button" (click)="switchToEdit()" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-2xl text-xs font-semibold shadow-lg"><i class="fa-solid fa-pen-to-square mr-1"></i> Edit</button>
+      <button *ngIf="modalMode() === 'edit'" type="button" (click)="saveEdit()" [disabled]="modalSaving()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-2xl text-xs font-semibold shadow-lg disabled:opacity-60">
+        <span *ngIf="!modalSaving()"><i class="fa-solid fa-check mr-1"></i> Save Changes</span>
+        <span *ngIf="modalSaving()"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in / check-out popup -->
+<app-assign-modal [assetId]="assignId()" [initialMode]="assignMode()" (closed)="closeAssign()"></app-assign-modal>
+<app-dell-case-popup [caseId]="linkedDellCaseId()" [newCaseAsset]="linkedDellCaseAsset()" (closed)="closeDellCase()"></app-dell-case-popup>

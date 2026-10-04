@@ -1,0 +1,199 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+
+  <!-- HEADER -->
+  <div class="flex items-center gap-3">
+    <button (click)="back()" class="glass-card w-10 h-10 rounded-2xl flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-indigo-400 transition" title="Back to employees">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+      <a routerLink="/employees" class="hover:text-indigo-400 transition">Employees</a>
+      <i class="fa-solid fa-chevron-right mx-1.5 text-[9px]"></i>
+      <span class="text-slate-500 dark:text-slate-300">{{ name() }}</span>
+    </div>
+  </div>
+
+  <!-- NOT FOUND -->
+  <div *ngIf="!exists()" class="glass-card rounded-3xl p-12 text-center text-slate-500 dark:text-slate-400">
+    <i class="fa-solid fa-user-slash text-3xl mb-3 block opacity-40"></i>
+    No employee named "<span class="font-bold">{{ name() }}</span>" was found.
+  </div>
+
+  <ng-container *ngIf="exists()">
+    <!-- PROFILE + STATS -->
+    <div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row md:items-center gap-6">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30" style="background: linear-gradient(135deg, #4f46e5, #9333ea);" role="img" [attr.aria-label]="name() + ' profile'">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" fill="#ffffff"></circle>
+            <path d="M4.5 21c.4-4.1 3.4-6.5 7.5-6.5s7.1 2.4 7.5 6.5H4.5Z" fill="#ffffff"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{{ name() }}</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-xl font-bold">{{ department() }}</span>
+            <span class="ml-2 font-mono text-slate-500 dark:text-slate-400">{{ employee()?.cciId ? 'CCI' + employee()?.cciId : 'CCIID not set' }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-2xl font-black text-slate-800 dark:text-white">{{ stats().total }}</div><div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-2xl font-black text-emerald-400">{{ stats().inUse }}</div><div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">In Use</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-2xl font-black text-slate-500 dark:text-slate-400">{{ stats().inStorage }}</div><div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Storage</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-2xl font-black text-amber-400">{{ stats().underRepair }}</div><div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Repair</div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- LEFT: EQUIPMENT + TIMELINE -->
+      <div class="lg:col-span-2 space-y-6">
+        <div *ngIf="primaryLaptops().length > 1" class="rounded-2xl border border-amber-400/40 bg-amber-50 dark:bg-amber-400/10 p-4 text-amber-900 dark:text-amber-200" role="alert">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-500" aria-hidden="true"></i>
+            <div>
+              <p class="font-bold">Multiple Primary laptops assigned</p>
+              <p class="mt-1 text-sm">{{ name() }} has {{ primaryLaptops().length }} laptops marked Primary. Change any loaner to Temporary or reassign/return the extra laptop.</p>
+              <ul class="mt-2 space-y-1 text-sm">
+                <li *ngFor="let laptop of primaryLaptops()"><span class="font-semibold">{{ laptop.name }}</span> · {{ laptop.serial }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- ASSIGNED EQUIPMENT -->
+        <div class="glass-card rounded-3xl">
+          <div class="p-5 border-b border-slate-200/50 dark:border-white/10">
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wide"><i class="fa-solid fa-box-open text-indigo-400 mr-2"></i>Assigned Equipment</h3>
+          </div>
+          <div class="p-4 space-y-2.5">
+            <div *ngIf="assets().length === 0" class="text-center text-slate-500 dark:text-slate-400 text-sm py-6">No equipment currently assigned.</div>
+            <button *ngFor="let a of assets()" type="button" (click)="openAsset(a)" class="glass-card rounded-2xl p-4 flex items-center gap-4 w-full text-left hover:ring-1 hover:ring-indigo-400/40 transition cursor-pointer" title="View asset details">
+              <div class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg shrink-0"><i class="fa-solid" [ngClass]="catIcon(a.category)"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-slate-900 dark:text-white truncate">{{ a.name }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 min-w-0 truncate"><span class="font-mono text-indigo-400">{{ a.serial }}</span> · {{ a.category }}</div>
+              </div>
+              <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-xl text-xs font-bold shrink-0" [ngClass]="statusClass(a.status)">{{ a.status }}<ng-container *ngIf="data.repairCaseIndicator(a) as caseIndicator"><button *ngIf="caseIndicator === 'open'" type="button" (click)="openDellCase(data.repairCaseId(a), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-emerald-500 hover:ring-4 hover:ring-emerald-500/20" title="Open linked Dell case" aria-label="Open linked Dell case"></button><button *ngIf="caseIndicator === 'resolved'" type="button" (click)="openDellCase(data.repairCaseId(a), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-purple-500 hover:ring-4 hover:ring-purple-500/20" title="Open resolved Dell case" aria-label="Open resolved Dell case"></button><button *ngIf="caseIndicator === 'missing'" type="button" (click)="openDellCaseForAsset(a, $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-red-500 hover:ring-4 hover:ring-red-500/20" title="Raise Dell case for this asset" aria-label="Raise Dell case for this asset"></button></ng-container></span>
+              <i class="fa-solid fa-chevron-right text-slate-300 dark:text-slate-600 text-xs shrink-0"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="glass-card rounded-3xl">
+          <div class="p-5 border-b border-slate-200/50 dark:border-white/10">
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left text-indigo-400 mr-2"></i>Activity Timeline</h3>
+          </div>
+          <div class="p-5 max-h-[65vh] overflow-y-auto overscroll-contain" role="region" aria-label="Employee activity timeline" tabindex="0">
+            <div *ngIf="timeline().length === 0" class="text-center text-slate-500 dark:text-slate-400 text-sm py-6">No recorded history for this employee's assets yet.</div>
+            <ol *ngIf="timeline().length > 0" class="relative border-l border-slate-200/60 dark:border-white/10 ml-3 space-y-5">
+              <li *ngFor="let t of timeline()" class="ml-6">
+                <span class="absolute -left-3 flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 ring-4 ring-white/40 dark:ring-white/5">
+                  <i class="fa-solid text-xs" [ngClass]="[historyIcon(t.action).icon, historyIcon(t.action).color]"></i>
+                </span>
+                <div class="glass-card rounded-2xl p-3">
+                  <p class="text-sm text-slate-700 dark:text-slate-200">{{ t.action }}</p>
+                  <p *ngIf="t.from !== undefined && t.to !== undefined" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Custody: <span class="font-semibold">{{ t.from || 'Stock' }}</span>
+                    <i class="fa-solid fa-arrow-right mx-1 text-indigo-400"></i>
+                    <span class="font-semibold text-indigo-500">{{ t.to || 'Stock' }}</span>
+                  </p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <button type="button" (click)="openAssetById(t.assetId)" class="font-semibold hover:text-indigo-400 transition" title="View asset details">{{ t.assetName }}</button> · <span class="font-mono text-indigo-400">{{ t.serial }}</span>
+                    · {{ t.user }} · {{ fmt(t.ts) }}
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: COMMENTS -->
+      <div class="glass-card rounded-3xl flex flex-col h-fit">
+        <div class="p-5 border-b border-slate-200/50 dark:border-white/10">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wide"><i class="fa-solid fa-comments text-indigo-400 mr-2"></i>Notes <span class="text-xs font-bold text-indigo-400">{{ comments().length }}</span></h3>
+        </div>
+        <div class="p-4 space-y-2.5 max-h-[28rem] overflow-y-auto">
+          <div *ngIf="comments().length === 0" class="text-center text-slate-500 dark:text-slate-400 text-sm py-8">
+            <i class="fa-solid fa-comment-dots text-2xl mb-2 block opacity-40"></i>
+            No notes yet.<span *ngIf="canWrite"> Add the first one below.</span>
+          </div>
+          <div *ngFor="let c of comments()" class="glass-card rounded-2xl p-3">
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 shrink-0 rounded-full bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xs font-black uppercase">{{ c.user.charAt(0) }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                    {{ c.user }}
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">· {{ fmt(c.ts) }}</span>
+                    <span *ngIf="c.editedTs" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 italic">(edited)</span>
+                  </p>
+                  <div *ngIf="canModify(c) && editingId() !== c.id" class="flex items-center gap-2 shrink-0">
+                    <button type="button" (click)="startEdit(c)" class="text-slate-400 hover:text-amber-400 transition" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <button type="button" (click)="remove(c)" class="text-slate-400 hover:text-rose-400 transition" title="Delete"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                  </div>
+                </div>
+                <p *ngIf="editingId() !== c.id" class="text-sm text-slate-700 dark:text-slate-200 mt-1 whitespace-pre-wrap break-words">{{ c.text }}</p>
+                <div *ngIf="editingId() === c.id" class="mt-2 space-y-2">
+                  <div class="flex items-end gap-2"><textarea [ngModel]="editText()" (ngModelChange)="editText.set($event)" rows="2" maxlength="500" class="glass-input flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none dark:text-white resize-none"></textarea><app-emoji-picker [text]="editText()" (textChange)="editText.set($event)"></app-emoji-picker></div>
+                  <div class="flex items-center justify-end gap-2">
+                    <button type="button" (click)="cancelEdit()" [disabled]="editSaving()" class="glass-card px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-40">Cancel</button>
+                    <button type="button" (click)="saveEdit(c)" [disabled]="editSaving() || !editText().trim()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50">
+                      <i class="fa-solid" [ngClass]="editSaving() ? 'fa-spinner fa-spin' : 'fa-check'"></i> Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="canWrite" class="p-4 border-t border-slate-200/50 dark:border-white/10 flex items-end gap-2">
+          <textarea [ngModel]="newComment()" (ngModelChange)="newComment.set($event)" rows="2" maxlength="500" placeholder="Add a note..." class="glass-input flex-1 rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white resize-none"></textarea>
+          <app-emoji-picker [text]="newComment()" (textChange)="newComment.set($event)"></app-emoji-picker>
+          <button type="button" (click)="add()" [disabled]="saving() || !newComment().trim()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white w-11 h-11 rounded-2xl text-sm font-semibold shadow-lg disabled:opacity-50 shrink-0" title="Post note">
+            <i class="fa-solid" [ngClass]="saving() ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+          </button>
+        </div>
+        <p *ngIf="!canWrite" class="text-[11px] text-slate-500 dark:text-slate-400 text-center p-4">You have read-only access to notes.</p>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- ASSET DETAIL POPUP (in-page, read-only) -->
+<div *ngIf="viewAsset() as v" (click)="closeAsset()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in" role="dialog" aria-modal="true" aria-label="Asset details">
+  <div (click)="$event.stopPropagation()" class="glass-card max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto p-6 sm:p-8 rounded-3xl shadow-2xl relative animate-slide-up space-y-5">
+    <button type="button" (click)="closeAsset()" class="absolute top-5 right-5 text-slate-400 hover:text-rose-400 transition" title="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-indigo-500/15 text-indigo-400 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid" [ngClass]="catIcon(v.category)"></i></div>
+      <div>
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ v.name }}</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Read-only view of this hardware record.</p>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-4 space-y-2 text-xs">
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Category</span><span class="font-semibold">{{ v.category }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Department</span><span class="font-semibold">{{ v.department }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Serial / Tag</span><span class="font-mono text-indigo-400 font-bold">{{ v.serial }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Assigned To</span><span class="font-semibold">{{ v.assignedTo || 'Stock' }}</span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Status</span><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold" [ngClass]="statusClass(v.status)">{{ v.status }}<ng-container *ngIf="data.repairCaseIndicator(v) as caseIndicator"><button *ngIf="caseIndicator === 'open'" type="button" (click)="openDellCase(data.repairCaseId(v), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-emerald-500 hover:ring-4 hover:ring-emerald-500/20" title="Open linked Dell case" aria-label="Open linked Dell case"></button><button *ngIf="caseIndicator === 'resolved'" type="button" (click)="openDellCase(data.repairCaseId(v), $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-purple-500 hover:ring-4 hover:ring-purple-500/20" title="Open resolved Dell case" aria-label="Open resolved Dell case"></button><button *ngIf="caseIndicator === 'missing'" type="button" (click)="openDellCaseForAsset(v, $event)" class="inline-block w-2.5 h-2.5 rounded-full ml-1.5 bg-red-500 hover:ring-4 hover:ring-red-500/20" title="Raise Dell case for this asset" aria-label="Raise Dell case for this asset"></button></ng-container></span></div>
+      <div class="flex justify-between py-1 border-b border-slate-200/50 dark:border-white/10"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Purchase Date</span><span>{{ v.purchaseDate || '—' }}</span></div>
+      <div class="flex justify-between py-1"><span class="text-slate-500 dark:text-slate-400 uppercase font-bold">Warranty Expiry</span><span class="font-semibold text-indigo-400">{{ v.warrantyDate || '—' }}</span></div>
+    </div>
+
+    <div class="space-y-2">
+      <h4 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> History</h4>
+      <div *ngIf="assetHistory().length; else noAssetHistory" class="max-h-[min(45vh,22rem)] overflow-y-auto space-y-2 pr-1">
+        <div *ngFor="let h of assetHistory()" class="glass-card rounded-xl p-2.5 text-[11px]">
+          <p class="text-slate-700 dark:text-slate-200 whitespace-pre-wrap break-words">{{ h.action }}</p>
+          <p class="text-slate-500 dark:text-slate-400 mt-0.5">{{ h.user }} · {{ fmt(h.ts) }}</p>
+        </div>
+      </div>
+      <ng-template #noAssetHistory>
+        <p class="text-xs text-slate-500 dark:text-slate-400 py-3">No history has been recorded for this asset yet.</p>
+      </ng-template>
+    </div>
+  </div>
+</div>
+<app-dell-case-popup [caseId]="linkedDellCaseId()" [newCaseAsset]="linkedDellCaseAsset()" (closed)="closeDellCase()"></app-dell-case-popup>

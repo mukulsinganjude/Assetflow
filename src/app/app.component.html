@@ -1,0 +1,562 @@
+<!-- Login Overlay -->
+<div *ngIf="!auth.isLoggedIn()" class="assetflow-login-overlay fixed inset-0 bg-slate-950/70 backdrop-blur-2xl z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="assetflow-login-title">
+    <div class="assetflow-login-card glass-card max-w-md w-full p-8 rounded-[2rem] shadow-2xl relative animate-slide-up">
+        <div class="flex flex-col items-center mb-6">
+            <div class="assetflow-login-mark bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-4 rounded-2xl text-white shadow-xl shadow-indigo-500/30">
+                <i class="fa-solid fa-cubes text-3xl"></i>
+            </div>
+            <h1 id="assetflow-login-title" class="text-3xl font-black tracking-tight text-slate-900 dark:text-white mt-3">Asset<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-400">Flow</span></h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wider">Enterprise IT &amp; Infrastructure Suite</p>
+        </div>
+        <form (ngSubmit)="handleLogin()" class="space-y-4">
+            <div>
+                    <label for="assetflow-login-email" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">Company email</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+                    <input id="assetflow-login-email" type="email" [(ngModel)]="loginEmail" name="loginEmail" required autocomplete="email" class="glass-input w-full rounded-2xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white transition" placeholder="name@ccrn.com">
+                </div>
+            </div>
+            <div>
+                <label for="assetflow-login-password" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">Password</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+                    <input id="assetflow-login-password" [type]="showPass ? 'text' : 'password'" [(ngModel)]="loginPass" name="loginPass" required autocomplete="current-password" class="glass-input w-full rounded-2xl pl-10 pr-10 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white transition" placeholder="********">
+                    <button type="button" (click)="togglePass()" [attr.aria-label]="showPass ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPass" class="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <i [class]="showPass ? 'fa-solid fa-eye-slash text-xs' : 'fa-solid fa-eye text-xs'"></i>
+                    </button>
+                </div>
+            </div>
+            <div *ngIf="loginError" class="text-rose-400 text-xs text-center font-semibold bg-rose-500/10 py-2.5 rounded-xl border border-rose-500/20">{{ loginErrorMsg || 'Invalid company email or password.' }}</div>
+            <button type="submit" [disabled]="loggingIn" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-bold py-3.5 rounded-2xl transition shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transform hover:-translate-y-0.5 active:translate-y-0 text-sm disabled:opacity-60">
+                {{ loggingIn ? 'Signing in...' : 'Enter Console' }}
+            </button>
+            <div class="-mt-2 flex justify-center">
+                <button type="button" (click)="openForgot()" class="text-xs text-indigo-500 hover:text-indigo-400 font-semibold transition">Forgot Password?</button>
+            </div>
+        </form>
+        <div class="mt-6 pt-4 border-t border-slate-200/50 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
+            <p>Sign in with your company email ending in <b>&#64;ccrn.com</b>.</p>
+            <p>Need access? Contact your AssetFlow administrator.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Password reset help -->
+<div *ngIf="forgotOpen" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div role="dialog" aria-modal="true" aria-labelledby="reset-help-title" class="glass-card max-w-md w-full p-8 rounded-3xl shadow-2xl relative animate-slide-up">
+        <div class="flex items-center space-x-3 mb-4">
+            <div class="w-10 h-10 bg-indigo-500/15 text-indigo-400 rounded-2xl flex items-center justify-center text-lg"><i class="fa-solid fa-key"></i></div>
+            <div>
+                <h3 id="reset-help-title" class="text-lg font-black text-slate-900 dark:text-white">Need a password reset?</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">For account security, password resets are handled by an administrator.</p>
+            </div>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-300">Please contact your AssetFlow administrator. An administrator can set a temporary password from User Roles.</p>
+        <div class="flex justify-end pt-5 border-t border-slate-200/50 dark:border-white/10 mt-5">
+            <button type="button" (click)="closeForgot()" class="glass-card px-5 py-2.5 rounded-2xl text-xs font-semibold">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main App Container -->
+<div *ngIf="auth.isLoggedIn()" class="assetflow-shell flex flex-col h-screen overflow-hidden relative animate-fade-in">
+    <div class="assetflow-topbar flex items-center justify-between px-5 h-14 shrink-0">
+        <a routerLink="/dashboard" class="assetflow-brand flex items-center gap-2.5" aria-label="AssetFlow home">
+            <span class="assetflow-brand-mark"><i class="fa-solid fa-cubes"></i></span>
+            <span>Asset<span class="assetflow-brand-flow">Flow</span></span>
+        </a>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button type="button" (click)="openCommandBar()" class="hidden md:flex items-center gap-3 rounded-xl border border-slate-300/70 dark:border-white/10 bg-white/45 dark:bg-white/5 px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:border-blue-400/60 transition" aria-label="Open command bar">
+                <i class="fa-solid fa-magnifying-glass"></i><span>Search pages, assets, people...</span><kbd class="rounded-md border border-slate-300 dark:border-white/15 px-1.5 py-0.5 font-mono text-[10px]">Ctrl K</kbd>
+            </button>
+            <button type="button" (click)="openCommandBar()" class="md:hidden w-9 h-9 rounded-xl border border-slate-300/70 dark:border-white/10 text-slate-500 dark:text-slate-300" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div class="notification-menu-root relative">
+                <button type="button" (click)="$event.stopPropagation(); toggleNotifications()" class="relative w-9 h-9 rounded-xl border border-slate-300/70 dark:border-white/10 text-slate-500 dark:text-slate-300 hover:border-blue-400/60 hover:text-blue-500 transition flex items-center justify-center" aria-label="Recent activity notifications" aria-haspopup="dialog" [attr.aria-expanded]="notificationsOpen" title="Recent activity">
+                    <i class="fa-regular fa-bell"></i>
+                    <span *ngIf="unreadNotificationCount()" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold leading-4">{{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}</span>
+                </button>
+                <section *ngIf="notificationsOpen" role="dialog" aria-label="Notifications" class="notification-panel absolute right-0 top-full mt-2 w-[min(24rem,calc(100vw-1.5rem))] rounded-2xl border border-slate-200 bg-white/95 text-slate-800 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-100 z-50 overflow-hidden">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10">
+                        <div><h2 class="text-sm font-bold">Notifications</h2><p class="text-[10px] text-slate-500 dark:text-slate-400">Assignments, returns, and edits</p></div>
+                        <button type="button" (click)="closeNotifications()" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500" aria-label="Close notifications"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-2 border-b border-slate-200/70 dark:border-white/10">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400">{{ unreadNotificationCount() }} unread</span>
+                        <div class="flex items-center gap-3">
+                            <button type="button" (click)="markAllNotificationsRead()" [disabled]="unreadNotificationCount() === 0" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40 disabled:no-underline">Mark all read</button>
+                            <button type="button" (click)="clearAllNotifications()" [disabled]="recentActivity().length === 0" class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline disabled:opacity-40 disabled:no-underline">Clear</button>
+                        </div>
+                    </div>
+                    <div *ngIf="recentActivity().length; else noNotifications" class="notification-list max-h-[min(70vh,36rem)] overflow-y-auto overscroll-contain">
+                        <ng-container *ngFor="let group of notificationGroups()">
+                            <p class="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ group.label }}</p>
+                            <div class="divide-y divide-slate-200/70 dark:divide-white/10">
+                                <div *ngFor="let event of group.events" class="flex items-center gap-1 px-2" [ngClass]="isNotificationRead(event) ? '' : 'bg-indigo-500/[0.04] dark:bg-indigo-400/[0.06]'">
+                                    <button type="button" (click)="openNotificationAsset(event)" class="flex items-start gap-3 flex-1 min-w-0 p-3 text-left hover:bg-slate-100/80 dark:hover:bg-white/5 transition rounded-lg">
+                                        <span class="relative w-8 h-8 shrink-0 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><i class="fa-solid text-xs" [ngClass]="notificationIcon(event.action)" aria-hidden="true"></i><span *ngIf="!isNotificationRead(event)" class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500" aria-label="Unread"></span></span>
+                                        <span class="min-w-0 flex-1"><span class="block text-xs text-slate-700 dark:text-slate-200 truncate"><strong>{{ event.asset.name }}</strong><span class="font-normal text-slate-500 dark:text-slate-400"> · {{ event.action }}</span></span><span class="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500 dark:text-slate-400"><span class="truncate">{{ event.user }}</span><span *ngIf="notificationRelativeTime(event.ts)" class="shrink-0">· {{ notificationRelativeTime(event.ts) }}</span></span></span>
+                                    </button>
+                                    <button type="button" (click)="dismissNotification(event, $event)" class="shrink-0 w-8 h-8 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition" aria-label="Delete notification" title="Delete notification"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                    <ng-template #noNotifications><p class="p-4 text-xs text-slate-500 dark:text-slate-400">You're all caught up — no notifications.</p></ng-template>
+                </section>
+            </div>
+            <button type="button" (click)="ui.openThemeSettings()" class="w-9 h-9 rounded-xl border border-slate-300/70 dark:border-white/10 text-slate-500 dark:text-slate-300 hover:border-blue-400/60 hover:text-blue-500 transition flex items-center justify-center" aria-label="Open theme settings" title="Theme settings">
+                <i class="fa-solid fa-palette"></i>
+            </button>
+            <button type="button" (click)="toggleTheme()" class="assetflow-theme-switch" [class.is-dark]="theme.isDark()" role="switch" [attr.aria-checked]="theme.isDark()" [attr.aria-label]="'Switch to ' + (theme.isDark() ? 'light' : 'dark') + ' mode'" title="Toggle light and dark mode">
+                <span class="assetflow-theme-choice theme-light" aria-hidden="true"><i class="fa-solid fa-sun"></i></span>
+                <span class="assetflow-theme-choice theme-dark" aria-hidden="true"><i class="fa-solid fa-moon"></i></span>
+                <span class="assetflow-theme-thumb" aria-hidden="true">
+                    <i [class]="theme.isDark() ? 'fa-solid fa-moon' : 'fa-solid fa-sun'"></i>
+                </span>
+            </button>
+            <div class="profile-menu-root relative">
+                <button type="button" class="assetflow-avatar overflow-hidden" (click)="$event.stopPropagation(); toggleProfileMenu()" [title]="'Account menu for ' + displayName" aria-label="Open account menu" aria-haspopup="menu" [attr.aria-expanded]="profileMenuOpen">
+                    <img *ngIf="profilePhoto" [src]="profilePhoto" [alt]="displayName + ' profile picture'" class="w-full h-full object-cover">
+                    <span *ngIf="!profilePhoto">{{ avatar }}</span>
+                </button>
+                <div *ngIf="profileMenuOpen" role="menu" aria-label="Account menu" class="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-2xl dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 z-50">
+                    <div class="flex items-center gap-4 px-5 pt-5 pb-4 border-b border-slate-200 dark:border-white/10">
+                        <div class="w-16 h-16 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-indigo-500 to-purple-500 text-white ring-2 ring-white shadow-sm dark:ring-white/10 flex items-center justify-center text-xl font-black">
+                            <img *ngIf="profilePhoto" [src]="profilePhoto" [alt]="displayName + ' profile picture'" class="w-full h-full object-cover">
+                            <span *ngIf="!profilePhoto">{{ avatar }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-base font-extrabold leading-tight truncate text-slate-900 dark:text-white">{{ displayName }}</div>
+                            <div class="text-xs font-semibold text-indigo-500 dark:text-indigo-400 truncate mt-0.5">{{ accountTitleLabel }}</div>
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 min-w-0"><i class="fa-solid fa-envelope text-[10px] shrink-0" aria-hidden="true"></i><span class="truncate">{{ email || 'Company email not set' }}</span></div>
+                        </div>
+                    </div>
+                    <div class="py-1.5">
+                        <button type="button" role="menuitem" (click)="openProfile()" class="w-full flex items-center gap-3 px-5 py-2.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition">
+                            <i class="fa-regular fa-user w-4 text-center text-slate-500" aria-hidden="true"></i><span>Profile</span>
+                        </button>
+                        <button type="button" role="menuitem" (click)="openGuide()" class="w-full flex items-center gap-3 px-5 py-2.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition">
+                            <i class="fa-regular fa-circle-question w-4 text-center text-indigo-500" aria-hidden="true"></i><span>View guide</span>
+                        </button>
+                        <div class="my-1.5 border-t border-slate-200 dark:border-white/10"></div>
+                        <button type="button" role="menuitem" (click)="closeProfileMenu(); handleLogout()" class="w-full flex items-center gap-3 px-5 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition">
+                            <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center" aria-hidden="true"></i><span>Log out</span>
+                        </button>
+                    </div>
+                    <div class="px-5 py-2.5 text-center text-[10px] text-slate-400 border-t border-slate-200 dark:border-white/10 dark:text-slate-500">
+                        Works with <span class="font-black text-slate-500 dark:text-slate-300">Asset<span class="text-indigo-500">Flow</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <app-theme-settings></app-theme-settings>
+    <div class="flex flex-1 min-h-0 overflow-hidden">
+    <div *ngIf="sidebarOpen" (click)="toggleSidebar()" class="assetflow-mobile-backdrop fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden"></div>
+
+    <!-- Glass Sidebar -->
+    <aside class="w-64 glass-nav fixed inset-y-0 left-0 z-50 md:static transition-transform duration-300 flex flex-col justify-between border-r border-slate-200/50 dark:border-white/10"
+           [class.-translate-x-full]="!sidebarOpen" [class.translate-x-0]="sidebarOpen" [class.md:translate-x-0]="true"
+           [class.md:w-20]="sidebarCollapsed" [class.sidebar-collapsed]="sidebarCollapsed">
+        <div class="sidebar-body p-6 flex-1 min-h-0 overflow-y-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div class="sidebar-logo flex items-center space-x-3">
+                    <div class="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-2xl text-white shadow-md shadow-indigo-500/30"><i class="fa-solid fa-cubes text-lg"></i></div>
+                    <span class="sidebar-brand text-xl font-black tracking-tight text-slate-900 dark:text-white">Asset<span class="text-indigo-500">Flow</span></span>
+                </div>
+                <button type="button" (click)="toggleCollapse()" class="hidden md:flex w-8 h-8 items-center justify-center rounded-lg border border-slate-300/60 dark:border-white/10 text-slate-500 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10 transition" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Use compact sidebar'" [title]="sidebarCollapsed ? 'Expand sidebar' : 'Use compact sidebar'">
+                    <i class="fa-solid" [ngClass]="sidebarCollapsed ? 'fa-angles-right' : 'fa-angles-left'" aria-hidden="true"></i>
+                </button>
+                <button (click)="toggleSidebar()" class="text-slate-400 md:hidden"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <nav class="space-y-1.5" aria-label="Main navigation" (dragover)="allowNavDrop($event)" (drop)="dropNavAtEnd($event, 'main')">
+                <div *ngFor="let item of orderedSidebarItems()" class="sidebar-sort-row" [class.sidebar-sort-editing]="sidebarEditMode" [draggable]="sidebarEditMode" (dragstart)="startNavDrag($event, item.id, 'main')" (dragover)="allowNavDrop($event)" (drop)="dropNavItem($event, item.id, 'main')" (dragend)="endNavDrag()">
+                    <ng-container *ngIf="item.id === 'assets'; else regularSidebarLink">
+                        <div class="flex items-center gap-1">
+                            <button type="button" (click)="toggleAssetsMenu()" [disabled]="sidebarEditMode" [attr.aria-expanded]="sidebarEditMode || assetsMenuOpen" aria-controls="assets-submenu" title="Assets" class="flex-1 w-full flex items-center space-x-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5 px-4 py-3 rounded-2xl font-medium transition" [ngClass]="isAssetsRouteActive() ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300' : ''">
+                                <i *ngIf="sidebarEditMode" class="nav-drag-handle fa-solid fa-ellipsis-vertical" aria-hidden="true"></i><i class="fa-solid fa-boxes-stacked w-5 text-indigo-400"></i><span class="flex-1 text-left">Assets</span><i class="fa-solid text-[10px] transition-transform" [class.fa-chevron-down]="sidebarEditMode || assetsMenuOpen" [class.fa-chevron-right]="!sidebarEditMode && !assetsMenuOpen"></i>
+                            </button>
+                        </div>
+                        <div *ngIf="sidebarEditMode || assetsMenuOpen" id="assets-submenu" class="assets-submenu ml-5 mt-1 pl-3 border-l border-slate-300/70 dark:border-white/10 space-y-1" (dragover)="allowNavDrop($event)" (drop)="dropNavAtEnd($event, 'assets')">
+                            <div *ngFor="let child of orderedAssetChildren()" class="sidebar-sort-row" [class.sidebar-sort-editing]="sidebarEditMode" [draggable]="sidebarEditMode" (dragstart)="startNavDrag($event, child.id, 'assets')" (dragover)="allowNavDrop($event)" (drop)="dropNavItem($event, child.id, 'assets')" (dragend)="endNavDrag()">
+                                <div class="flex items-center gap-1">
+                                    <a [routerLink]="sidebarEditMode ? null : child.route" (click)="handleNavClick($event)" [routerLinkActive]="'bg-gradient-to-r from-indigo-600 to-purple-600 !text-white shadow-lg shadow-indigo-600/30 font-semibold'" [title]="child.label" class="flex-1 min-w-0 flex items-center space-x-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                                        <i *ngIf="sidebarEditMode" class="nav-drag-handle fa-solid fa-ellipsis-vertical" aria-hidden="true"></i><i class="fa-solid w-5" [ngClass]="[child.icon, child.iconColor]"></i><span>{{ child.label }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <ng-template #regularSidebarLink>
+                        <div class="flex items-center gap-1">
+                            <a [routerLink]="sidebarEditMode ? null : item.route" (click)="handleNavClick($event)" [routerLinkActive]="'bg-gradient-to-r from-indigo-600 to-purple-600 !text-white shadow-lg shadow-indigo-600/30 font-semibold'" [title]="item.label" class="flex-1 min-w-0 flex items-center space-x-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5 px-4 py-3 rounded-2xl font-medium transition">
+                                <i *ngIf="sidebarEditMode" class="nav-drag-handle fa-solid fa-ellipsis-vertical" aria-hidden="true"></i><i class="fa-solid w-5" [ngClass]="[item.icon, item.iconColor]"></i><span>{{ item.label }}</span>
+                            </a>
+                        </div>
+                    </ng-template>
+                </div>
+            </nav>
+        </div>
+        <div class="px-5 pb-1 flex justify-start shrink-0">
+            <button type="button" (click)="toggleSidebarEdit()" [attr.aria-pressed]="sidebarEditMode" [attr.aria-label]="sidebarEditMode ? 'Save sidebar order' : 'Edit sidebar order'" [title]="sidebarEditMode ? 'Save tab order' : 'Edit tab order'" class="sidebar-edit-toggle rounded-lg border shadow-sm transition" [ngClass]="sidebarEditMode ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700' : 'border-slate-300/70 bg-white/50 text-slate-600 hover:border-indigo-400 hover:bg-indigo-500/10 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:border-indigo-400'">
+                <i class="fa-solid" [ngClass]="sidebarEditMode ? 'fa-check' : 'fa-pen-to-square'"></i><span class="sidebar-edit-label ml-1">{{ sidebarEditMode ? 'Save' : 'Edit' }}</span>
+            </button>
+        </div>
+        <div class="sidebar-footer p-4 m-3 glass-card rounded-2xl flex items-center justify-between">
+            <div class="sidebar-user text-xs truncate pr-2 flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs uppercase shadow-md overflow-hidden">
+                    <img *ngIf="profilePhoto" [src]="profilePhoto" [alt]="displayName + ' profile picture'" class="w-full h-full object-cover">
+                    <span *ngIf="!profilePhoto">{{ avatar }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-900 dark:text-white font-bold block leading-none">{{ displayName }}</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">{{ email }}</span>
+                    <span class="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 tracking-wider">{{ accountTitleLabel }}</span>
+                </div>
+            </div>
+            <button type="button" (click)="handleLogout()" class="text-slate-400 hover:text-rose-500 p-2 rounded-xl transition" title="Logout" aria-label="Logout"><i class="fa-solid fa-arrow-right-from-bracket text-sm"></i></button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-y-auto w-full min-w-0">
+        <header class="glass-nav h-16 flex items-center justify-between px-6 sticky top-0 z-30">
+            <div class="flex items-center space-x-3">
+                <button (click)="toggleSidebar()" class="text-slate-600 dark:text-slate-300 md:hidden"><i class="fa-solid fa-bars text-lg"></i></button>
+                <h1 class="text-base md:text-lg font-black text-slate-800 dark:text-white tracking-tight">{{ pageTitle }}</h1>
+            </div>
+        </header>
+        <router-outlet></router-outlet>
+    </div>
+    </div>
+</div>
+
+<!-- Full-app former employee asset details overlay (outside the scrollable route outlet). -->
+<div *ngIf="ui.formerEmployeeAssetDetails() as record" (click)="ui.closeFormerEmployeeAssetDetails()" class="former-employee-asset-overlay fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" role="presentation">
+    <section (click)="$event.stopPropagation()" class="former-employee-asset-dialog w-full max-w-xl max-h-[78vh] flex flex-col overflow-hidden rounded-3xl p-5 md:p-6 shadow-2xl" role="dialog" aria-modal="true" [attr.aria-label]="'Asset details for ' + record.name">
+        <header class="flex items-start justify-between gap-4 border-b border-slate-200/50 dark:border-white/10 pb-4 shrink-0">
+            <div>
+                <h2 class="text-lg font-black text-slate-900 dark:text-white">{{ record.name }} · Asset details</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Former employee · Left {{ record.leftAt | date:'M/d/yyyy' }}</p>
+            </div>
+            <button type="button" (click)="ui.closeFormerEmployeeAssetDetails()" class="text-slate-400 hover:text-rose-500 p-2" aria-label="Close asset details"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+
+        <div *ngIf="!record.assets.length" class="text-sm italic text-slate-500 py-6">No assets were assigned at offboarding.</div>
+        <div *ngIf="record.assets.length" class="mt-4 space-y-3 overflow-y-auto min-h-0 pr-1">
+            <article *ngFor="let asset of record.assets" class="former-employee-asset-card rounded-2xl p-4">
+                <div class="flex items-start gap-3">
+                    <span class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-laptop"></i></span>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white">{{ asset.name }}</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ asset.category }} · <span class="font-mono text-indigo-500 dark:text-indigo-400">{{ asset.serial }}</span></p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 text-xs">
+                            <div><span class="block text-[10px] font-bold uppercase text-slate-500">Department</span><span>{{ asset.department || record.department || '—' }}</span></div>
+                            <div><span class="block text-[10px] font-bold uppercase text-slate-500">Status at departure</span><span>{{ asset.status || '—' }}</span></div>
+                            <div><span class="block text-[10px] font-bold uppercase text-slate-500">Assignment type</span><span>{{ asset.assignmentType || '—' }}</span></div>
+                            <div><span class="block text-[10px] font-bold uppercase text-slate-500">Condition at return</span><span class="font-semibold" [ngClass]="asset.offboardingCondition === 'Good' ? 'text-emerald-600 dark:text-emerald-400' : asset.offboardingCondition === 'Damaged' ? 'text-rose-600 dark:text-rose-400' : asset.offboardingCondition === 'Needs repair' ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-400'">{{ asset.offboardingCondition || 'Not recorded' }}</span></div>
+                            <div *ngIf="asset.purchaseDate"><span class="block text-[10px] font-bold uppercase text-slate-500">Purchase date</span><span>{{ asset.purchaseDate }}</span></div>
+                            <div *ngIf="asset.warrantyDate"><span class="block text-[10px] font-bold uppercase text-slate-500">Warranty date</span><span>{{ asset.warrantyDate }}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <footer class="flex justify-end border-t border-slate-200/50 dark:border-white/10 pt-4 mt-4 shrink-0">
+            <button type="button" (click)="ui.closeFormerEmployeeAssetDetails()" class="glass-card px-5 py-2.5 rounded-xl text-xs font-semibold">Close</button>
+        </footer>
+    </section>
+</div>
+
+<!-- Global command bar -->
+<div *ngIf="commandOpen" class="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/55 backdrop-blur-sm p-3 sm:p-6 pt-[10vh]" (click)="closeCommandBar()">
+    <section role="dialog" aria-modal="true" aria-label="Search and quick actions" class="command-palette glass-card w-full max-w-2xl overflow-hidden rounded-2xl shadow-2xl" (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-3 px-4 sm:px-5 border-b border-slate-200/70 dark:border-white/10">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input #commandInput type="search" [ngModel]="commandQuery()" (ngModelChange)="commandQuery.set($event); onCommandQueryChange()" (keydown)="onCommandKeydown($event)" class="command-input flex-1 py-4 bg-transparent outline-none text-slate-800 dark:text-white placeholder:text-slate-400" placeholder="Search pages, assets, people, or try ‘check in’..." autocomplete="off" aria-label="Search command bar">
+            <button type="button" (click)="closeCommandBar()" class="rounded-md border border-slate-300 dark:border-white/15 px-2 py-1 text-[10px] text-slate-500 dark:text-slate-400">ESC</button>
+        </div>
+        <div class="max-h-[min(60vh,28rem)] overflow-y-auto p-2">
+            <p class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ commandQuery() ? 'Results' : 'Quick access' }}</p>
+            <button *ngFor="let item of commandResults(); let i = index" type="button" (mouseenter)="commandIndex.set(i)" (click)="selectCommand(item)" [class.command-result-active]="i === commandIndex()" class="command-result flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300"><i class="fa-solid" [ngClass]="item.icon"></i></span>
+                <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ item.label }}</span><span class="block truncate text-xs text-slate-500 dark:text-slate-400">{{ item.detail }}</span></span>
+                <i *ngIf="item.kind === 'asset'" class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i>
+                <span *ngIf="item.kind === 'checkin' || item.kind === 'checkout'" class="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Quick action</span>
+            </button>
+            <p *ngIf="commandResults().length === 0" class="px-3 py-8 text-center text-sm text-slate-500">No matching pages, assets, or people.</p>
+        </div>
+        <footer class="flex items-center justify-between border-t border-slate-200/70 dark:border-white/10 px-4 py-2.5 text-[10px] text-slate-500 dark:text-slate-400"><span><kbd>↑</kbd> <kbd>↓</kbd> navigate <kbd class="ml-2">↵</kbd> open</span><span>AssetFlow search</span></footer>
+    </section>
+</div>
+
+<!-- Keyboard shortcuts help -->
+<div *ngIf="shortcutsOpen()" class="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/55 backdrop-blur-sm p-3 sm:p-6 pt-[10vh]" (click)="closeShortcuts()">
+    <section role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" class="glass-card w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/70 dark:border-white/10">
+            <div class="flex items-center gap-2.5"><i class="fa-regular fa-keyboard text-indigo-500"></i><h2 class="text-sm font-bold text-slate-900 dark:text-white">Keyboard shortcuts</h2></div>
+            <button type="button" (click)="closeShortcuts()" class="rounded-md border border-slate-300 dark:border-white/15 px-2 py-1 text-[10px] text-slate-500 dark:text-slate-400">ESC</button>
+        </div>
+        <div class="max-h-[min(65vh,32rem)] overflow-y-auto p-5 space-y-5">
+            <div *ngFor="let group of shortcutGroups">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{{ group.title }}</p>
+                <ul class="space-y-1.5">
+                    <li *ngFor="let item of group.items" class="flex items-center justify-between gap-4 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{{ item.label }}</span>
+                        <span class="flex items-center gap-1 shrink-0">
+                            <kbd *ngFor="let key of item.keys" class="min-w-[1.5rem] text-center text-[11px] font-sans font-semibold px-1.5 py-0.5 rounded border border-slate-300 bg-slate-50 text-slate-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-300">{{ key }}</kbd>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <footer class="border-t border-slate-200/70 dark:border-white/10 px-5 py-2.5 text-[10px] text-slate-500 dark:text-slate-400">Tip: press <kbd class="font-sans font-semibold">G</kbd> then a letter to jump between pages.</footer>
+    </section>
+</div>
+<div *ngIf="profileOpen" class="fixed inset-0 bg-slate-950/60 flex items-center justify-center p-4 z-[60]">
+    <section role="dialog" aria-modal="true" aria-labelledby="profile-title" class="glass-card max-w-lg w-full p-6 sm:p-7 rounded-2xl shadow-2xl relative max-h-[calc(100dvh-2rem)] overflow-y-auto">
+        <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+                <h2 id="profile-title" class="text-xl font-bold text-slate-900 dark:text-white">Profile settings</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Account details are managed by an administrator. You can update your profile picture here.</p>
+            </div>
+            <button type="button" (click)="closeProfile()" [disabled]="savingProfile" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 rounded-lg" aria-label="Close profile settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form (ngSubmit)="saveProfile()" class="space-y-5">
+            <div class="flex items-center gap-4 p-4 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10">
+                <div class="w-16 h-16 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold">
+                    <img *ngIf="profileImage" [src]="profileImage" [alt]="profileDisplayName + ' profile picture preview'" class="w-full h-full object-cover">
+                    <span *ngIf="!profileImage">{{ avatar }}</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Profile picture</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">JPEG, PNG, or WebP. Adjust the crop before applying.</p>
+                    <div class="flex items-center gap-3 mt-2">
+                        <label for="profilePhotoUpload" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Choose picture</label>
+                        <input id="profilePhotoUpload" type="file" accept="image/jpeg,image/png,image/webp" (change)="onProfilePhotoSelected($event)" class="sr-only">
+                        <button *ngIf="profileImage" type="button" (click)="removeProfilePhoto()" class="text-xs text-slate-500 hover:text-rose-500">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="photoCropOpen" class="rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-100/55 dark:bg-white/5 p-4 space-y-4">
+                <div class="text-center">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Adjust profile picture</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Drag to reposition. Use the slider to zoom.</p>
+                </div>
+                <div class="relative w-60 h-60 mx-auto rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300/70 dark:border-white/20 shadow-inner touch-none select-none cursor-grab active:cursor-grabbing"
+                     (pointerdown)="beginPhotoCropDrag($event)" (pointermove)="movePhotoCropDrag($event)" (pointerup)="endPhotoCropDrag($event)" (pointercancel)="endPhotoCropDrag($event)">
+                    <img [src]="photoCropSource" alt="Picture crop preview" draggable="false" class="absolute max-w-none pointer-events-none select-none"
+                         [style.width.px]="photoCropWidth" [style.height.px]="photoCropHeight"
+                         [style.left.px]="120 + photoCropX" [style.top.px]="120 + photoCropY"
+                         [style.transform]="'translate(-50%, -50%) scale(' + photoCropZoom + ')'">
+                </div>
+                <div class="max-w-sm mx-auto space-y-2">
+                    <div class="flex items-center justify-between gap-3">
+                        <label for="profilePhotoZoom" class="text-xs font-medium text-slate-600 dark:text-slate-300">Zoom</label>
+                        <button type="button" (click)="updatePhotoCropZoom(1); photoCropX = 0; photoCropY = 0" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">Reset</button>
+                    </div>
+                    <input id="profilePhotoZoom" type="range" name="profilePhotoZoom" min="1" max="3" step="0.01" [ngModel]="photoCropZoom" (ngModelChange)="updatePhotoCropZoom($event)" class="w-full accent-blue-600">
+                </div>
+                <div class="flex justify-center gap-3">
+                    <button type="button" (click)="cancelPhotoCrop()" class="glass-card px-4 py-2 rounded-lg text-sm font-medium">Cancel crop</button>
+                    <button type="button" (click)="applyPhotoCrop()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">Use picture</button>
+                </div>
+            </div>
+
+            <div>
+                <label for="profileDisplayName" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 mb-1.5">Display name</label>
+                <input id="profileDisplayName" type="text" [value]="displayName" disabled class="glass-input w-full px-3.5 py-2.5 text-sm rounded-lg opacity-70 cursor-not-allowed">
+            </div>
+            <div>
+                <label for="profileTitle" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 mb-1.5">Title</label>
+                <input id="profileTitle" type="text" [value]="accountTitleLabel === 'Title not set' ? '' : accountTitleLabel" disabled class="glass-input w-full px-3.5 py-2.5 text-sm rounded-lg opacity-70 cursor-not-allowed" placeholder="No title set">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Only an administrator can change account details in System Users Management.</p>
+            </div>
+            <div>
+                <label for="profileEmail" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 mb-1.5">Company email</label>
+                <input id="profileEmail" type="email" [value]="email" disabled class="glass-input w-full px-3.5 py-2.5 text-sm rounded-lg opacity-70 cursor-not-allowed">
+            </div>
+
+            <div *ngIf="profileError" role="alert" class="text-sm text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">{{ profileError }}</div>
+            <div class="flex justify-end gap-3 pt-1">
+                <button type="button" (click)="closeProfile()" [disabled]="savingProfile" class="glass-card px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">Cancel</button>
+                <button type="submit" [disabled]="savingProfile" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60">
+                    {{ savingProfile ? 'Saving...' : 'Save picture' }}
+                </button>
+            </div>
+        </form>
+    </section>
+    </div>
+
+<!-- Floating help shortcut, available on every signed-in tab. -->
+<button *ngIf="auth.isLoggedIn()" type="button" (click)="openGuide()" class="fixed bottom-4 right-4 z-[45] flex h-11 w-11 items-center justify-center rounded-full bg-transparent p-0 shadow-xl shadow-slate-950/30 transition hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300" aria-label="Open website guide" title="Open help guide">
+    <svg viewBox="0 0 512 512" class="h-full w-full" role="img" aria-hidden="true">
+        <circle cx="256" cy="256" r="232" fill="#35c6d8" />
+        <circle cx="256" cy="256" r="214" fill="none" stroke="#78e5ed" stroke-width="8" opacity=".45" />
+        <path d="M116 189a180 180 0 0 1 125-123" fill="none" stroke="#b8f7f4" stroke-width="16" stroke-linecap="round" opacity=".8" />
+        <path d="M402 333a180 180 0 0 1-96 99" fill="none" stroke="#179ebd" stroke-width="18" stroke-linecap="round" opacity=".45" />
+        <text x="256" y="365" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="345" font-weight="700" fill="#fff">?</text>
+    </svg>
+</button>
+
+<!-- In-app help guide -->
+<div *ngIf="guideOpen" class="fixed inset-0 z-[55] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" (click)="closeGuide()">
+    <section class="glass-card w-full max-w-6xl h-[min(90vh,52rem)] rounded-3xl shadow-2xl flex flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title" (click)="$event.stopPropagation()">
+        <header class="shrink-0 p-5 sm:px-6 sm:py-4 border-b border-slate-200/60 dark:border-white/10 flex items-start justify-between gap-4">
+            <div><p class="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-500">AssetFlow help center</p><h2 id="guide-title" class="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Website guide</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose a tab to see what it does, how to use it, and an example of the fields.</p></div>
+            <button type="button" (click)="closeGuide()" class="w-9 h-9 shrink-0 rounded-xl text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/10" aria-label="Close guide"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+            <nav class="shrink-0 md:w-64 border-b md:border-b-0 md:border-r border-slate-200/60 dark:border-white/10 p-2 md:p-3 overflow-x-auto md:overflow-y-auto" aria-label="Guide sections">
+                <p class="hidden md:block px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Browse guide</p>
+                <label class="relative mb-2 block md:px-1">
+                    <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
+                    <input type="search" [ngModel]="guideSearch()" (ngModelChange)="onGuideSearch($event)" placeholder="Search tabs and guide content" aria-label="Search guide tabs and content" class="w-full rounded-xl border border-slate-200 bg-white/70 py-2 pl-9 pr-9 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-100" />
+                    <button *ngIf="guideSearch()" type="button" (click)="onGuideSearch('')" aria-label="Clear guide search" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/10"><i class="fa-solid fa-xmark"></i></button>
+                </label>
+                <div class="flex md:flex-col gap-1 min-w-max md:min-w-0">
+                    <button *ngFor="let item of guideNavigationItems()" type="button" (click)="selectGuideTab(item.title)" class="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition md:w-full" [ngClass]="selectedGuideTab === item.title ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/5'"><i class="fa-solid w-4 text-center" [ngClass]="item.icon"></i><span>{{ item.title }}</span></button>
+                    <p *ngIf="guideNavigationItems().length === 0" class="px-3 py-3 text-xs text-slate-500 dark:text-slate-400 md:w-full">No guide matches. Try another word.</p>
+                </div>
+            </nav>
+            <div class="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">
+                <ng-container *ngIf="selectedGuideTab !== 'Role permissions' && selectedGuideTab !== 'Useful notes'; else guideSpecialTab">
+                    <ng-container *ngIf="activeGuideSection as item">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="flex items-start gap-3"><span class="w-11 h-11 shrink-0 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><i class="fa-solid text-lg" [ngClass]="item.icon"></i></span><div><h3 class="text-xl font-black text-slate-900 dark:text-white">{{ item.title }}</h3><p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ item.description }}</p></div></div>
+                            <span class="rounded-full bg-slate-500/10 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-300">{{ item.access }}</span>
+                        </div>
+                        <section class="mt-6 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>How to use this tab</h4>
+                            <ol class="mt-4 space-y-3">
+                                <li *ngFor="let step of guideStepLists[selectedGuideTab]; let index = index" class="flex gap-3 text-sm text-slate-600 dark:text-slate-300"><span class="w-6 h-6 shrink-0 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold flex items-center justify-center">{{ index + 1 }}</span><span class="pt-0.5 leading-relaxed">{{ step }}</span></li>
+                            </ol>
+                        </section>
+                        <section *ngIf="guideExamples[selectedGuideTab] as example" class="mt-5">
+                            <div class="flex items-center gap-2"><i class="fa-regular fa-window-maximize text-sky-500"></i><h4 class="text-sm font-bold text-slate-900 dark:text-white">Example field snapshot</h4></div>
+                            <div class="mt-3 max-w-2xl rounded-2xl border border-slate-300/70 dark:border-white/10 bg-white/70 dark:bg-slate-950/40 p-4 sm:p-5 shadow-sm">
+                                <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3"><div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ item.title }}</p><p class="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{{ example.caption }}</p></div><i class="fa-solid" [ngClass]="item.icon + ' text-indigo-400'"></i></div>
+                                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <div *ngFor="let field of example.fields" class="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] px-3 py-2.5"><span class="block text-[9px] font-bold uppercase tracking-wide text-slate-400">{{ field.label }}</span><span class="mt-1 block break-words text-xs font-semibold text-slate-800 dark:text-slate-100">{{ field.value }}</span></div>
+                                </div>
+                                <p class="mt-3 text-[10px] text-slate-400">Illustrative example only. Your available fields and values depend on your access and records.</p>
+                            </div>
+                        </section>
+                    </ng-container>
+                </ng-container>
+                <ng-template #guideSpecialTab>
+                  <ng-container *ngIf="selectedGuideTab === 'Role permissions'; else guideUsefulNotes">
+                    <div class="flex items-start gap-3"><span class="w-11 h-11 shrink-0 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><i class="fa-solid fa-shield-halved text-lg"></i></span><div><h3 class="text-xl font-black text-slate-900 dark:text-white">Role permissions</h3><p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Compare what each account role can access and change. Access is also enforced by the server.</p></div></div>
+                    <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200/70 dark:border-white/10">
+                        <table class="w-full min-w-[760px] border-collapse text-left text-xs">
+                            <thead><tr class="bg-slate-100/80 dark:bg-white/[0.05]"><th class="sticky left-0 bg-slate-100 dark:bg-slate-900 px-4 py-3 font-bold text-slate-700 dark:text-slate-200">Tab / area</th><th class="px-4 py-3 font-bold text-indigo-600 dark:text-indigo-300">Admin</th><th class="px-4 py-3 font-bold text-sky-600 dark:text-sky-300">Data Entry</th><th class="px-4 py-3 font-bold text-slate-600 dark:text-slate-300">Viewer</th></tr></thead>
+                            <tbody class="divide-y divide-slate-200/70 dark:divide-white/10">
+                                <tr *ngFor="let row of rolePermissionRows" class="align-top hover:bg-indigo-500/[0.03]"><th scope="row" class="sticky left-0 bg-white dark:bg-slate-950 px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ row.section }}</th><td class="px-4 py-3 leading-relaxed text-slate-600 dark:text-slate-300">{{ row.admin }}</td><td class="px-4 py-3 leading-relaxed text-slate-600 dark:text-slate-300">{{ row.entry }}</td><td class="px-4 py-3 leading-relaxed text-slate-600 dark:text-slate-300">{{ row.viewer }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3"><span class="text-xs font-bold text-indigo-600 dark:text-indigo-300">Admin</span><p class="mt-1 text-[11px] text-slate-600 dark:text-slate-300">Full system access, including user management, employee records, consumables, and protected settings.</p></div>
+                        <div class="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3"><span class="text-xs font-bold text-sky-600 dark:text-sky-300">Data Entry</span><p class="mt-1 text-[11px] text-slate-600 dark:text-slate-300">Can manage day-to-day inventory and handovers. Admin-only pages and settings remain restricted.</p></div>
+                        <div class="rounded-xl border border-slate-300 dark:border-white/10 bg-slate-500/5 p-3"><span class="text-xs font-bold text-slate-600 dark:text-slate-300">Viewer</span><p class="mt-1 text-[11px] text-slate-600 dark:text-slate-300">Read-only access to available information; editing and operational actions are disabled.</p></div>
+                    </div>
+                    <p class="mt-4 text-[11px] text-slate-500 dark:text-slate-400">A role can hide a tab or disable its actions. Some actions (such as deleting assets or managing employees) are admin-only even when Data Entry can use the page.</p>
+                  </ng-container>
+                </ng-template>
+                <ng-template #guideUsefulNotes>
+                    <div class="flex items-start gap-3"><span class="w-11 h-11 shrink-0 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center"><i class="fa-solid fa-circle-info text-lg"></i></span><div><h3 class="text-xl font-black text-slate-900 dark:text-white">Useful notes</h3><p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Use this key to interpret statuses and colors across the website.</p></div></div>
+                    <section class="mt-6 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Asset status</h4>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3"><span class="inline-flex rounded-full bg-sky-500/10 px-2.5 py-1 text-xs font-bold text-sky-600 dark:text-sky-300">In Use</span><p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Assigned to an employee.</p></div>
+                            <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3"><span class="inline-flex rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-300">In Storage</span><p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Available in stock, not assigned.</p></div>
+                            <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"><span class="inline-flex rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-300">Under Repair</span><p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Needs repair follow-up before reuse.</p></div>
+                        </div>
+                    </section>
+                    <section class="mt-4 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Offboarding condition colors</h4>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div class="flex items-center gap-3 rounded-xl bg-emerald-500/5 p-3"><span class="h-3 w-3 rounded-full bg-emerald-500"></span><div><p class="text-xs font-bold text-emerald-600 dark:text-emerald-300">Good</p><p class="text-[11px] text-slate-500">Returned to In Storage</p></div></div>
+                            <div class="flex items-center gap-3 rounded-xl bg-rose-500/5 p-3"><span class="h-3 w-3 rounded-full bg-rose-500"></span><div><p class="text-xs font-bold text-rose-600 dark:text-rose-300">Damaged</p><p class="text-[11px] text-slate-500">Asset status becomes Under Repair</p></div></div>
+                            <div class="flex items-center gap-3 rounded-xl bg-orange-500/5 p-3"><span class="h-3 w-3 rounded-full bg-orange-500"></span><div><p class="text-xs font-bold text-orange-600 dark:text-orange-300">Needs repair</p><p class="text-[11px] text-slate-500">Asset status becomes Under Repair</p></div></div>
+                        </div>
+                    </section>
+                    <section class="mt-4 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Dell case indicator</h4>
+                        <div class="mt-3 flex flex-wrap gap-3 text-xs">
+                            <span class="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-rose-600 dark:text-rose-300"><i class="h-2 w-2 rounded-full bg-rose-500"></i>No case open</span>
+                            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-600 dark:text-emerald-300"><i class="h-2 w-2 rounded-full bg-emerald-500"></i>Unresolved case</span>
+                            <span class="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-purple-600 dark:text-purple-300"><i class="h-2 w-2 rounded-full bg-purple-500"></i>Resolved case</span>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">The small dot beside the asset status is clickable. Select it to open the linked Dell case popup without leaving the asset page.</p>
+                    </section>
+                    <section class="mt-4 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Working with records</h4>
+                        <ul class="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300"><li>• Search and filters only narrow what is displayed; they do not change or delete records.</li><li>• Before saving, check identifiers such as asset serial, Dell case ID, employee name, and CCIID.</li><li>• Use the template before importing spreadsheets and review any skipped rows or validation messages.</li><li>• Export when you need a spreadsheet copy of the records currently available on a page.</li><li>• If a tab or action is unavailable, ask an administrator to verify your role in User Roles.</li></ul>
+                    </section>
+                </ng-template>
+            </div>
+        </div>
+        <footer class="shrink-0 p-3 border-t border-slate-200/60 dark:border-white/10 flex justify-between items-center"><span class="hidden sm:block text-[10px] text-slate-400">{{ selectedGuideTab }} · Use the left menu to switch sections</span><button type="button" (click)="closeGuide()" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Close guide</button></footer>
+    </section>
+</div>
+
+<!-- QR Code Live Modal -->
+<div *ngIf="ui.qrVisible()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div class="glass-card max-w-sm w-full p-6 rounded-3xl flex flex-col items-center text-center shadow-2xl relative animate-slide-up">
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ ui.qrTitle() }}</h3>
+        <p class="text-xs font-mono text-indigo-400 mb-4 font-bold">{{ ui.qrSerial() }}</p>
+        <div id="qrcodeContainer" class="p-4 bg-white rounded-2xl shadow-md my-2"></div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 font-medium">Scan to instantly retrieve technical specs and maintenance status.</p>
+        <button (click)="closeQr()" class="w-full mt-4 glass-card py-2.5 rounded-2xl text-xs font-bold hover:bg-white/10">Close Tag</button>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="fixed top-4 right-4 z-[60] flex flex-col items-end space-y-2.5 pointer-events-none w-[calc(100%-2rem)] sm:w-auto max-w-sm">
+    <div *ngFor="let t of ui.toasts()"
+         class="pointer-events-auto glass-card w-full sm:min-w-[18rem] px-4 py-3 rounded-2xl shadow-2xl flex items-start gap-3 animate-slide-up border-l-4"
+         [ngClass]="{
+           'border-emerald-500': t.type === 'success',
+           'border-rose-500': t.type === 'error',
+           'border-indigo-500': t.type === 'info'
+         }">
+        <i class="fa-solid mt-0.5 text-sm"
+           [ngClass]="{
+             'fa-circle-check text-emerald-500': t.type === 'success',
+             'fa-circle-exclamation text-rose-500': t.type === 'error',
+             'fa-circle-info text-indigo-500': t.type === 'info'
+           }"></i>
+        <p class="text-xs font-semibold text-slate-700 dark:text-slate-100 leading-snug flex-1 whitespace-pre-line">{{ t.message }}</p>
+        <button type="button" (click)="ui.dismissToast(t.id)" aria-label="Dismiss notification" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition"><i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i></button>
+    </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<div *ngIf="ui.confirmState() as c" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-[60] animate-fade-in">
+    <div class="glass-card max-w-md w-full p-7 rounded-3xl shadow-2xl relative animate-slide-up space-y-5">
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl"
+                 [ngClass]="c.danger ? 'bg-rose-500/15 text-rose-400' : 'bg-indigo-500/15 text-indigo-400'">
+                <i class="fa-solid" [ngClass]="c.danger ? 'fa-triangle-exclamation' : 'fa-circle-question'"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ c.title }}</h3>
+            </div>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{{ c.message }}</p>
+        <div class="flex space-x-3 pt-1">
+            <button type="button" (click)="ui.resolveConfirm(false)" class="flex-1 glass-card py-3 rounded-2xl text-xs font-semibold hover:bg-white/10">{{ c.cancelLabel }}</button>
+            <button type="button" (click)="ui.resolveConfirm(true)"
+                    class="flex-1 text-white py-3 rounded-2xl text-xs font-semibold shadow-lg transition"
+                    [ngClass]="c.danger ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'">
+                {{ c.confirmLabel }}
+            </button>
+        </div>
+    </div>
+</div>

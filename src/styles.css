@@ -1,0 +1,1710 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' stroke='%23ffffff' stroke-width='1.2' d='M3.5 2.5 L21.5 12 L12.5 14.5 L8.5 21.5 Z'/%3E%3C/svg%3E"), auto !important;
+}
+
+button, select, input, a, label, .cursor-pointer, .custom-select-trigger, .custom-select-option {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' stroke='%23ffffff' stroke-width='1.2' d='M3.5 2.5 L21.5 12 L12.5 14.5 L8.5 21.5 Z'/%3E%3C/svg%3E"), pointer !important;
+}
+
+.font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+.glass-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(226, 232, 240, 0.82) 0%, rgba(210, 219, 231, 0.68) 100%);
+    backdrop-filter: blur(9px) saturate(150%);
+    -webkit-backdrop-filter: blur(9px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dark .glass-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.82) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(9px) saturate(150%);
+    -webkit-backdrop-filter: blur(9px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 28px rgba(129, 140, 248, 0.06);
+}
+
+/* ---- Performance: never stack backdrop-blur on nested glass ----
+   Each backdrop-filter is a separate GPU blur pass; a card inside a card
+   doubles that cost for zero visual gain (the parent already blurred what's
+   behind it). Nested cards get a slightly more opaque solid fill instead. */
+.glass-card .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.66) 0%, rgba(241, 245, 249, 0.55) 100%);
+}
+.dark .glass-card .glass-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.78) 100%);
+}
+
+.glass-card:hover { border-color: rgba(99, 102, 241, 0.4); box-shadow: 0 22px 50px rgba(79, 70, 229, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.55); }
+
+.glass-nav {
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.88) 0%, rgba(210, 219, 231, 0.74) 100%);
+    backdrop-filter: blur(11px) saturate(150%);
+    -webkit-backdrop-filter: blur(11px) saturate(150%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.sidebar-sort-editing { cursor: grab; border-radius: 0.9rem; }
+.sidebar-sort-editing:active { cursor: grabbing; }
+.sidebar-sort-editing:hover { outline: 1px dashed rgba(99, 102, 241, 0.5); }
+.nav-drag-handle { width: 0.5rem; font-size: 0.7rem; opacity: 0.7; cursor: grab; }
+.sidebar-edit-toggle { padding: 0.35rem 0.45rem; font-size: 0.65rem; line-height: 1; }
+.sidebar-edit-label { font-size: 0.6rem; }
+
+.dark .glass-nav {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 15, 29, 0.78) 100%);
+    backdrop-filter: blur(11px) saturate(150%);
+    -webkit-backdrop-filter: blur(11px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Desktop collapsed sidebar: icon-only rail. Scoped to md+ so the mobile
+   slide-in overlay always shows full labels regardless of collapsed state. */
+@media (min-width: 768px) {
+    .assetflow-shell aside.sidebar-collapsed { width: 5rem !important; }
+    html.dark .assetflow-shell aside.sidebar-collapsed { width: 5rem !important; }
+    aside.sidebar-collapsed .sidebar-logo { display: none !important; }
+    aside.sidebar-collapsed .sidebar-body > div:first-child { justify-content: flex-end; }
+    aside.sidebar-collapsed .sidebar-brand,
+    aside.sidebar-collapsed .sidebar-user,
+    aside.sidebar-collapsed .sidebar-edit-label,
+    aside.sidebar-collapsed nav span,
+    aside.sidebar-collapsed nav .fa-chevron-down { display: none; }
+    aside.sidebar-collapsed nav .assets-submenu,
+    aside.sidebar-collapsed nav .assets-nav-group .fa-chevron-right { display: none; }
+    aside.sidebar-collapsed .sidebar-body { padding-left: 0.75rem; padding-right: 0.75rem; }
+    aside.sidebar-collapsed nav a,
+    aside.sidebar-collapsed nav > div > button,
+    aside.sidebar-collapsed nav > a {
+        justify-content: center;
+        padding-left: 0; padding-right: 0;
+    }
+    aside.sidebar-collapsed nav a > i,
+    aside.sidebar-collapsed nav button > i { margin: 0; }
+    aside.sidebar-collapsed .sidebar-footer { justify-content: center; }
+    aside.sidebar-collapsed .sidebar-edit-toggle { padding: 0.4rem; }
+    aside.sidebar-collapsed nav .sidebar-sort-row > div > button { justify-content: center; padding-left: 0; padding-right: 0; }
+}
+
+
+.glass-input {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(237, 242, 247, 0.85) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+}
+
+.dark .glass-input {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.78) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+}
+
+app-custom-select { display: block; width: 100%; min-width: 0; }
+.custom-select-container { position: relative; user-select: none; display: block; width: 100%; min-width: 0; }
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    border-radius: 1rem;
+    padding: 0.6rem 0.95rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.dark .custom-select-trigger {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.custom-select-container.open { z-index: 9999 !important; }
+.custom-select-container.open .custom-select-trigger { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35); }
+.custom-select-container.open .custom-select-trigger i { transform: rotate(180deg); }
+
+/* The former-employee details dialog sits over the inventory page and needs
+   an opaque surface so text and rows underneath cannot bleed through it. */
+.former-employee-asset-overlay { background: rgba(2, 6, 23, .52) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(5px) !important; }
+.former-employee-asset-dialog {
+    color: #202735;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .35);
+}
+.former-employee-asset-card { background: #f8fafc; border: 1px solid #dbe2ea; }
+html.dark .former-employee-asset-dialog { color: #f1f3f5; background: #202329 !important; border-color: #454951; }
+html.dark .former-employee-asset-card { background: #292c32; border-color: #454951; }
+
+/* Nested glass cards form their own stacking contexts. Lift the return item
+   containing an open dropdown above its neighboring asset cards. */
+.offboarding-return-item { z-index: 0; }
+.offboarding-return-item:has(.custom-select-container.open) { z-index: 100; }
+
+.custom-select-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: 100%;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.1rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+    z-index: 99999 !important;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    padding: 0.4rem;
+}
+
+.dark .custom-select-menu { background: #0f172a !important; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85); }
+.custom-select-container.drop-up .custom-select-menu { top: auto; bottom: calc(100% + 6px); }
+.custom-select-container.open .custom-select-menu { display: block; animation: fadeIn 0.15s ease forwards; }
+
+.custom-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #334155;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.dark .custom-select-option { color: #e2e8f0; }
+.custom-select-option:hover { background: #eef2ff !important; color: #4f46e5 !important; }
+.dark .custom-select-option:hover { background: #1e293b !important; color: #818cf8 !important; }
+.custom-select-option.selected { background: #4f46e5 !important; color: #ffffff !important; font-weight: 700; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+
+/* ---- Light-mode legibility ----
+   The dimmed slate cards reduced contrast for muted greys and the pale -400/-500
+   accent text. These overrides darken TEXT only in light mode; standalone icons
+   (<i>) keep their lighter accent, and dark mode is untouched (scoped to :not(.dark)). */
+html:not(.dark) .text-slate-500 { color: #475569; }        /* slate-600 */
+
+html:not(.dark) .text-indigo-400:not(i)  { color: #4f46e5 !important; }  /* indigo-600 */
+html:not(.dark) .text-emerald-400:not(i) { color: #059669 !important; }  /* emerald-600 */
+html:not(.dark) .text-emerald-500:not(i) { color: #059669 !important; }
+html:not(.dark) .text-rose-400:not(i)    { color: #e11d48 !important; }  /* rose-600 */
+html:not(.dark) .text-rose-500:not(i)    { color: #e11d48 !important; }
+html:not(.dark) .text-amber-400:not(i)   { color: #d97706 !important; }  /* amber-600 */
+html:not(.dark) .text-amber-500:not(i)   { color: #d97706 !important; }
+html:not(.dark) .text-sky-400:not(i)     { color: #0284c7 !important; }  /* sky-600 */
+html:not(.dark) .text-purple-400:not(i)  { color: #9333ea !important; }  /* purple-600 */
+html:not(.dark) .text-blue-400:not(i)    { color: #2563eb !important; }  /* blue-600 */
+
+
+/* keyframes duplicated here so they work even before Tailwind CDN evaluates.
+   Keep these in sync with tailwind.config.js keyframes (esp. fadeIn's rise). */
+@keyframes fadeIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* =====================================================================
+   Motion & micro-interactions
+   All effects below animate only transform / opacity / color / shadow,
+   which the compositor handles on the GPU — no layout reflow, no extra
+   backdrop-filter re-blur, so they stay smooth even with many cards.
+   Everything is disabled under prefers-reduced-motion.
+   ===================================================================== */
+
+/* Smooth, snappy feedback on every interactive control. */
+button, a, .cursor-pointer, .custom-select-trigger, .custom-select-option {
+    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.2s ease, background-color 0.2s ease,
+                border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Tactile press on buttons (skip disabled ones). */
+button:not(:disabled):active { transform: scale(0.96); }
+
+/* Sidebar / nav links nudge right on hover — only when labels are visible. */
+nav a:hover, nav > div > button:hover { transform: translateX(3px); }
+aside.sidebar-collapsed nav a:hover,
+aside.sidebar-collapsed nav > div > button:hover { transform: none; }
+
+/* Focus glow on glass inputs. */
+.glass-input:focus, .glass-input:focus-visible {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Entrance animations — attach class in markup where a reveal is wanted. */
+@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes popIn    { 0% { opacity: 0; transform: scale(0.94); }      100% { opacity: 1; transform: scale(1); } }
+
+.reveal-up  { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.reveal-pop { animation: popIn    0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Small staggered delays for grids/lists using .reveal-up on children. */
+.reveal-up:nth-child(1) { animation-delay: 0.02s; }
+.reveal-up:nth-child(2) { animation-delay: 0.06s; }
+.reveal-up:nth-child(3) { animation-delay: 0.10s; }
+.reveal-up:nth-child(4) { animation-delay: 0.14s; }
+.reveal-up:nth-child(5) { animation-delay: 0.18s; }
+.reveal-up:nth-child(6) { animation-delay: 0.22s; }
+
+/* Gentle spin utility for loading glyphs. */
+@keyframes softSpin { to { transform: rotate(360deg); } }
+.animate-soft-spin { animation: softSpin 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   AssetFlow console refresh
+   Flat charcoal surfaces, quiet borders, compact navigation and blue focus
+   states carry the same visual language across every route and dialog.
+   ------------------------------------------------------------------------- */
+:root {
+    color-scheme: dark;
+    --af-page: #1b1b1b;
+    --af-bar: #1d1d1d;
+    --af-panel: #292929;
+    --af-panel-raised: #303030;
+    --af-border: #414141;
+    --af-text: #e7e7e7;
+    --af-muted: #a3a3a3;
+    --af-blue: #2785c7;
+    --af-blue-soft: #263944;
+}
+
+html.dark body {
+    background: var(--af-page) !important;
+    color: var(--af-text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html.dark .font-mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+html.dark .glass-card {
+    background: var(--af-panel) !important;
+    border: 1px solid var(--af-border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html.dark .glass-card:hover { border-color: #5a5a5a !important; box-shadow: none !important; }
+html.dark .assetflow-login-overlay {
+    background: var(--af-page) !important; backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html.dark .assetflow-login-mark {
+    background: #303b44 !important; border: 1px solid #455762;
+    border-radius: 10px !important; box-shadow: none !important;
+}
+html.dark .assetflow-login-card h1 span {
+    background: none !important; color: #73bdf0 !important; -webkit-text-fill-color: #73bdf0 !important;
+}
+html.dark .glass-input {
+    background: #202020 !important; border: 1px solid #4a4a4a !important;
+    border-radius: 7px !important; color: var(--af-text) !important;
+}
+html.dark .glass-input:focus,
+html.dark .glass-input:focus-visible {
+    border-color: var(--af-blue) !important; box-shadow: 0 0 0 2px #2785c733 !important;
+}
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-300,
+html.dark .text-slate-200 { color: var(--af-text) !important; }
+html.dark .text-slate-500,
+html.dark .text-slate-400 { color: var(--af-muted) !important; }
+html.dark .text-indigo-300,
+html.dark .text-indigo-400,
+html.dark .text-indigo-500,
+html.dark .text-purple-400 { color: #73bdf0 !important; }
+html.dark button[class*="bg-gradient-to-"] {
+    background: var(--af-blue) !important; border: 1px solid #3797d7 !important;
+}
+html.dark [class*="shadow-"] { box-shadow: none !important; }
+
+.assetflow-shell { background: var(--af-page); }
+.assetflow-topbar {
+    background: var(--af-bar);
+    color: var(--af-text);
+    border-bottom: 1px solid var(--af-border);
+}
+.assetflow-brand { color: var(--af-text); font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+.assetflow-brand-flow {
+    color: #4f8fd0;
+    background: linear-gradient(90deg, #4f8fd0 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.assetflow-brand-mark {
+    width: 25px; height: 25px; display: grid; place-items: center;
+    border-radius: 7px; background: var(--af-blue); color: white; font-size: 12px;
+}
+.assetflow-top-label { color: var(--af-muted); font-size: 12px; }
+.assetflow-icon-button {
+    width: 32px; height: 32px; display: grid; place-items: center;
+    border: 1px solid var(--af-border); border-radius: 7px;
+    background: transparent; color: var(--af-text); font-size: 13px;
+}
+.assetflow-avatar {
+    width: 26px; height: 26px; display: grid; place-items: center;
+    border-radius: 50%; background: #4637bd; color: white; font-size: 11px; font-weight: 700;
+}
+
+html.dark .assetflow-shell .glass-nav {
+    background: var(--af-bar) !important;
+    border-color: var(--af-border) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html.dark .assetflow-shell aside {
+    width: 12rem;
+    border-right: 1px solid var(--af-border) !important;
+}
+html.dark .assetflow-shell .sidebar-body { padding: 1rem; }
+html.dark .assetflow-shell .sidebar-brand { display: none; }
+html.dark .assetflow-shell .sidebar-logo { display: none !important; }
+html.dark .assetflow-shell aside nav { display: flex; flex-direction: column; gap: 3px; }
+html.dark .assetflow-shell aside nav a,
+html.dark .assetflow-shell aside nav > div > button {
+    min-height: 34px; padding: 7px 10px; border-radius: 6px !important;
+    color: #c3c3c3 !important; font-size: 13px; font-weight: 500;
+}
+html.dark .assetflow-shell aside nav a:hover,
+html.dark .assetflow-shell aside nav > div > button:hover { background: #252525 !important; color: white !important; }
+html.dark .assetflow-shell aside nav a.bg-gradient-to-r,
+html.dark .assetflow-shell aside nav a[aria-current="page"] {
+    background: #263440 !important; color: #a9d8ff !important; box-shadow: none !important;
+}
+html.dark .assetflow-shell aside nav a > i,
+html.dark .assetflow-shell aside nav button > i { color: #a6c9df !important; }
+html.dark .assetflow-shell .sidebar-footer {
+    background: transparent !important; border: 0 !important; border-top: 1px solid var(--af-border) !important;
+    border-radius: 0 !important; margin: 0 !important; padding: 12px 8px !important;
+}
+html.dark .assetflow-shell .sidebar-user span:first-child { color: var(--af-text) !important; }
+html.dark .assetflow-shell .sidebar-footer > div > div:first-child { border-radius: 50% !important; }
+
+html.dark .assetflow-shell header.glass-nav {
+    min-height: 52px; height: 52px; padding: 0 18px;
+    background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+html.dark .assetflow-shell header h1 { font-size: 19px; font-weight: 650; letter-spacing: -.025em; }
+html.dark .assetflow-shell .glass-card {
+    background: var(--af-panel) !important;
+    border: 1px solid var(--af-border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html.dark .assetflow-shell .glass-card:hover { border-color: #5a5a5a !important; box-shadow: none !important; }
+html.dark .assetflow-shell [class*="bg-gradient-to-"] { background-image: none !important; }
+html.dark .assetflow-shell button[class*="bg-gradient-to-"] {
+    background: var(--af-blue) !important; border: 1px solid #3797d7 !important;
+}
+html.dark .assetflow-shell .shadow,
+html.dark .assetflow-shell [class*="shadow-"] { box-shadow: none !important; }
+html.dark .assetflow-shell [class*="rounded-3xl"],
+html.dark .assetflow-shell [class*="rounded-2xl"] { border-radius: 10px !important; }
+html.dark .assetflow-shell .glass-input {
+    background: #202020 !important; border: 1px solid #4a4a4a !important;
+    border-radius: 7px !important; color: var(--af-text) !important;
+}
+html.dark .assetflow-shell .glass-input:focus,
+html.dark .assetflow-shell .glass-input:focus-visible {
+    border-color: var(--af-blue) !important; box-shadow: 0 0 0 2px #2785c733 !important;
+}
+html.dark .assetflow-shell .custom-select-trigger {
+    background: #202020 !important; border: 1px solid #4a4a4a !important;
+    border-radius: 7px !important; color: var(--af-text) !important; box-shadow: none !important;
+}
+html.dark .assetflow-shell .custom-select-menu {
+    background: #252525 !important; border: 1px solid var(--af-border) !important;
+    border-radius: 8px !important; box-shadow: 0 12px 28px #0008 !important;
+}
+html.dark .assetflow-shell .custom-select-option { color: #d0d0d0 !important; border-radius: 5px !important; }
+html.dark .assetflow-shell .custom-select-option:hover,
+html.dark .assetflow-shell .custom-select-option.selected { background: #263944 !important; color: #b7e0ff !important; }
+
+html.dark .assetflow-shell .text-slate-900,
+html.dark .assetflow-shell .text-slate-800,
+html.dark .assetflow-shell .text-slate-700,
+html.dark .assetflow-shell .text-slate-600,
+html.dark .assetflow-shell .text-slate-300,
+html.dark .assetflow-shell .text-slate-200 { color: var(--af-text) !important; }
+html.dark .assetflow-shell .text-slate-500,
+html.dark .assetflow-shell .text-slate-400 { color: var(--af-muted) !important; }
+html.dark .assetflow-shell .text-indigo-300,
+html.dark .assetflow-shell .text-indigo-400,
+html.dark .assetflow-shell .text-indigo-500,
+html.dark .assetflow-shell .text-purple-400 { color: #73bdf0 !important; }
+html.dark .assetflow-shell .bg-indigo-600 { background-color: var(--af-blue) !important; }
+html.dark .assetflow-shell .bg-indigo-500\/10,
+html.dark .assetflow-shell .bg-indigo-500\/15,
+html.dark .assetflow-shell .bg-indigo-500\/20 { background-color: var(--af-blue-soft) !important; }
+html.dark .assetflow-shell .border-white\/10,
+html.dark .assetflow-shell .border-slate-200\/50,
+html.dark .assetflow-shell .border-slate-200\/40 { border-color: var(--af-border) !important; }
+html.dark .assetflow-shell table { color: var(--af-text); }
+html.dark .assetflow-shell thead { background: #242424 !important; }
+html.dark .assetflow-shell tbody tr:hover { background: #303030 !important; }
+html.dark .assetflow-shell td, html.dark .assetflow-shell th { border-color: #3b3b3b !important; }
+
+html.dark .fixed.inset-0.bg-slate-950\/70:not(.assetflow-login-overlay) { background: #0009 !important; backdrop-filter: blur(3px) !important; }
+html.dark .glass-card.max-w-md,
+html.dark .glass-card.max-w-sm { background: #252525 !important; }
+html.dark .assetflow-shell ::-webkit-scrollbar-thumb,
+html.dark body ::-webkit-scrollbar-thumb { background: #555; }
+
+@media (max-width: 767px) {
+    .assetflow-topbar { padding-inline: 14px; }
+    html.dark .assetflow-shell aside { width: 16rem; }
+    html.dark .assetflow-shell .sidebar-brand { display: none; }
+    html.dark .assetflow-shell header.glass-nav { padding-inline: 14px; }
+    html.dark .assetflow-shell header h1 { font-size: 16px; }
+}
+
+/* Soft glass finish: low-contrast color washes and blur add depth without
+   obscuring dense asset tables or reducing label contrast. */
+html.dark body {
+    background-image:
+        radial-gradient(ellipse at 6% 0%, rgba(70, 97, 155, .13), transparent 36rem),
+        radial-gradient(ellipse at 96% 18%, rgba(96, 59, 145, .10), transparent 32rem) !important;
+}
+html.dark .assetflow-shell {
+    background-image:
+        radial-gradient(ellipse at 0% 0%, rgba(78, 108, 169, .10), transparent 34rem),
+        radial-gradient(ellipse at 100% 6%, rgba(115, 74, 160, .08), transparent 30rem);
+}
+html.dark .glass-card,
+html.dark .assetflow-shell .glass-card {
+    background: linear-gradient(135deg,
+        rgba(58, 63, 77, .76) 0%,
+        rgba(43, 46, 57, .78) 48%,
+        rgba(37, 40, 50, .84) 100%) !important;
+    border-color: rgba(177, 190, 218, .20) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07),
+                0 12px 32px rgba(0,0,0,.16) !important;
+    backdrop-filter: blur(14px) saturate(125%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
+}
+html.dark .assetflow-shell .glass-card:hover {
+    border-color: rgba(123, 177, 225, .36) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.09),
+                0 14px 34px rgba(0,0,0,.22) !important;
+}
+html.dark .glass-nav,
+html.dark .assetflow-shell .glass-nav,
+html.dark .assetflow-topbar {
+    background: linear-gradient(115deg,
+        rgba(35, 39, 49, .91),
+        rgba(29, 30, 39, .86) 58%,
+        rgba(37, 32, 47, .88)) !important;
+    border-color: rgba(177, 190, 218, .17) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+    backdrop-filter: blur(18px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(130%) !important;
+}
+html.dark .assetflow-login-card {
+    background: linear-gradient(145deg, rgba(57, 61, 74, .92), rgba(36, 39, 49, .94)) !important;
+    border-color: rgba(177, 190, 218, .23) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 24px 70px rgba(0,0,0,.30) !important;
+    backdrop-filter: blur(18px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(130%) !important;
+}
+html.dark .glass-input,
+html.dark .assetflow-shell .glass-input,
+html.dark .custom-select-trigger,
+html.dark .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(135deg, rgba(38, 43, 55, .86), rgba(31, 34, 43, .82)) !important;
+    border-color: rgba(174, 188, 215, .22) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+html.dark .glass-input:focus,
+html.dark .assetflow-shell .glass-input:focus,
+html.dark .custom-select-container.open .custom-select-trigger {
+    border-color: rgba(91, 174, 235, .76) !important;
+    box-shadow: 0 0 0 2px rgba(39, 133, 199, .20), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+html.dark .assetflow-shell .glass-card[class*="shadow-"] {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 12px 32px rgba(0,0,0,.16) !important;
+}
+html.dark .assetflow-shell button[class*="bg-gradient-to-"] {
+    background: linear-gradient(115deg, #287fba, #347fc1 58%, #496bb5) !important;
+    border-color: rgba(139, 195, 241, .43) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.17), 0 5px 16px rgba(39, 111, 172, .20) !important;
+}
+
+/* Matching glass treatment for the light theme. */
+html:not(.dark) body {
+    color-scheme: light;
+    background: #edf2f8 !important;
+    color: #202b3a;
+    background-image:
+        radial-gradient(ellipse at 4% 0%, rgba(96, 153, 218, .19), transparent 38rem),
+        radial-gradient(ellipse at 96% 12%, rgba(158, 123, 205, .15), transparent 34rem) !important;
+}
+html:not(.dark) .assetflow-shell {
+    background: transparent;
+    background-image:
+        radial-gradient(ellipse at 0% 0%, rgba(93, 155, 222, .10), transparent 36rem),
+        radial-gradient(ellipse at 100% 8%, rgba(149, 116, 194, .08), transparent 30rem);
+}
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .glass-nav,
+html:not(.dark) .assetflow-shell .glass-nav {
+    color: #243247;
+    background: linear-gradient(115deg,
+        rgba(255,255,255,.88), rgba(245,248,253,.82) 58%, rgba(247,244,252,.86)) !important;
+    border-color: rgba(122, 145, 177, .25) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 8px 26px rgba(67, 91, 128, .07) !important;
+    backdrop-filter: blur(18px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+}
+html:not(.dark) .assetflow-shell aside { border-right-color: rgba(122,145,177,.25) !important; }
+html:not(.dark) .assetflow-shell .sidebar-logo { display: none !important; }
+html:not(.dark) .assetflow-brand { color: #28374b !important; }
+html:not(.dark) .assetflow-top-label { color: #64748a; }
+html:not(.dark) .assetflow-icon-button { color: #34455d; border-color: rgba(122,145,177,.34); }
+html:not(.dark) .assetflow-shell aside nav a,
+html:not(.dark) .assetflow-shell aside nav > div > button {
+    color: #536176 !important;
+    border-radius: 7px !important;
+}
+html:not(.dark) .assetflow-shell aside nav a:hover,
+html:not(.dark) .assetflow-shell aside nav > div > button:hover { background: rgba(255,255,255,.64) !important; color: #1d5e95 !important; }
+html:not(.dark) .assetflow-shell aside nav a.bg-gradient-to-r,
+html:not(.dark) .assetflow-shell aside nav a[aria-current="page"] {
+    background: linear-gradient(110deg, rgba(70,145,209,.18), rgba(103,142,207,.12)) !important;
+    color: #205f91 !important; box-shadow: inset 0 0 0 1px rgba(61,130,189,.18) !important;
+}
+html:not(.dark) .glass-card {
+    color: #263449;
+    background: linear-gradient(135deg,
+        rgba(255,255,255,.88) 0%,
+        rgba(248,250,255,.80) 52%,
+        rgba(244,247,253,.86) 100%) !important;
+    border: 1px solid rgba(125,148,180,.25) !important;
+    border-radius: 12px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.92),
+                0 12px 32px rgba(67,91,128,.09) !important;
+    backdrop-filter: blur(14px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+}
+html:not(.dark) .glass-card:hover { border-color: rgba(69,137,195,.39) !important; }
+html:not(.dark) .assetflow-login-overlay { background: rgba(230,237,247,.80) !important; backdrop-filter: blur(8px) !important; }
+html:not(.dark) .assetflow-login-card {
+    background: linear-gradient(145deg, rgba(255,255,255,.93), rgba(243,247,253,.91)) !important;
+    border-color: rgba(117,145,181,.29) !important;
+    box-shadow: inset 0 1px 0 white, 0 24px 70px rgba(58,83,125,.18) !important;
+    backdrop-filter: blur(18px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+html:not(.dark) .assetflow-login-mark { background: linear-gradient(145deg,#3f91ce,#576fc0) !important; }
+html:not(.dark) .glass-input,
+html:not(.dark) .assetflow-shell .glass-input,
+html:not(.dark) .custom-select-trigger,
+html:not(.dark) .assetflow-shell .custom-select-trigger {
+    color: #253348 !important;
+    background: linear-gradient(135deg, rgba(255,255,255,.85), rgba(241,246,253,.82)) !important;
+    border: 1px solid rgba(127,150,181,.34) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.82) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+html:not(.dark) .glass-input:focus,
+html:not(.dark) .assetflow-shell .glass-input:focus,
+html:not(.dark) .custom-select-container.open .custom-select-trigger {
+    border-color: #4c9bd2 !important;
+    box-shadow: 0 0 0 3px rgba(57,143,207,.14), inset 0 1px 0 rgba(255,255,255,.85) !important;
+}
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder { color: #8290a3 !important; opacity: 1; }
+html:not(.dark) .custom-select-menu,
+html:not(.dark) .assetflow-shell .custom-select-menu {
+    background: rgba(250,252,255,.96) !important;
+    border-color: rgba(125,148,180,.30) !important;
+    box-shadow: 0 14px 34px rgba(52,73,108,.18) !important;
+    backdrop-filter: blur(16px) !important;
+}
+html:not(.dark) .custom-select-option { color: #38485e !important; }
+html:not(.dark) .custom-select-option:hover,
+html:not(.dark) .custom-select-option.selected { background: #e4f1fc !important; color: #225f91 !important; }
+html:not(.dark) .assetflow-shell [class*="bg-gradient-to-"] { background-image: none !important; }
+html:not(.dark) .assetflow-shell button[class*="bg-gradient-to-"] {
+    background: linear-gradient(115deg, #3288c2, #447ec1 58%, #5876bd) !important;
+    border: 1px solid rgba(45,112,169,.35) !important;
+    color: white !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 5px 16px rgba(48,112,170,.17) !important;
+}
+html:not(.dark) .assetflow-shell button[class*="from-emerald-"] { background: linear-gradient(115deg,#17956e,#13866b) !important; }
+html:not(.dark) .assetflow-shell button[class*="from-rose-"],
+html:not(.dark) .assetflow-shell button[class*="from-red-"] { background: linear-gradient(115deg,#d84d5e,#c83d50) !important; }
+html:not(.dark) .assetflow-shell .text-slate-900,
+html:not(.dark) .assetflow-shell .text-slate-800,
+html:not(.dark) .assetflow-shell .text-slate-700 { color: #263449 !important; }
+html:not(.dark) .assetflow-shell .text-slate-600 { color: #405168 !important; }
+html:not(.dark) .assetflow-shell .text-slate-500,
+html:not(.dark) .assetflow-shell .text-slate-400 { color: #68788e !important; }
+html:not(.dark) .assetflow-shell .text-indigo-400,
+html:not(.dark) .assetflow-shell .text-indigo-500,
+html:not(.dark) .assetflow-shell .text-purple-400 { color: #356f9d !important; }
+html:not(.dark) .assetflow-shell .bg-indigo-500\/10,
+html:not(.dark) .assetflow-shell .bg-indigo-500\/15,
+html:not(.dark) .assetflow-shell .bg-indigo-500\/20 { background-color: rgba(72,145,199,.12) !important; }
+html:not(.dark) .assetflow-shell .bg-indigo-600 { background-color: #357fb7 !important; }
+html:not(.dark) .assetflow-shell thead { background: rgba(226,234,245,.68) !important; }
+html:not(.dark) .assetflow-shell tbody tr:hover { background: rgba(227,239,251,.7) !important; }
+html:not(.dark) .assetflow-shell td,
+html:not(.dark) .assetflow-shell th { border-color: rgba(125,148,180,.22) !important; }
+
+/* Reduce the light theme's near-white glare while keeping its blue glass tint. */
+html:not(.dark) body {
+    background-color: #e2e7ef !important;
+    background-image:
+        radial-gradient(ellipse at 4% 0%, rgba(83,139,200,.09), transparent 38rem),
+        radial-gradient(ellipse at 96% 12%, rgba(139,112,178,.07), transparent 34rem) !important;
+}
+html:not(.dark) .assetflow-shell {
+    background-image:
+        radial-gradient(ellipse at 0% 0%, rgba(84,139,198,.06), transparent 36rem),
+        radial-gradient(ellipse at 100% 8%, rgba(139,112,178,.05), transparent 30rem) !important;
+}
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .glass-nav,
+html:not(.dark) .assetflow-shell .glass-nav {
+    background: linear-gradient(115deg,
+        rgba(228,234,243,.94), rgba(218,227,239,.91) 58%, rgba(227,224,237,.92)) !important;
+    border-color: rgba(118,137,164,.28) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.62), 0 7px 22px rgba(60,79,108,.06) !important;
+}
+html:not(.dark) .glass-card {
+    background: linear-gradient(135deg,
+        rgba(235,240,247,.94) 0%, rgba(225,232,242,.92) 54%, rgba(220,229,240,.95) 100%) !important;
+    border-color: rgba(118,137,164,.28) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.58), 0 10px 28px rgba(60,79,108,.08) !important;
+}
+html:not(.dark) .assetflow-shell .glass-card:hover { border-color: rgba(67,127,177,.38) !important; }
+html:not(.dark) .assetflow-login-overlay { background: rgba(222,229,239,.88) !important; }
+html:not(.dark) .assetflow-login-card {
+    background: linear-gradient(145deg, rgba(235,240,247,.97), rgba(219,228,240,.96)) !important;
+    border-color: rgba(118,137,164,.32) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.64), 0 22px 58px rgba(58,78,111,.17) !important;
+}
+html:not(.dark) .glass-input,
+html:not(.dark) .assetflow-shell .glass-input,
+html:not(.dark) .custom-select-trigger,
+html:not(.dark) .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(135deg, rgba(231,237,245,.96), rgba(218,227,238,.94)) !important;
+    border-color: rgba(117,137,164,.34) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.52) !important;
+}
+html:not(.dark) .custom-select-menu,
+html:not(.dark) .assetflow-shell .custom-select-menu {
+    background: rgba(231,237,245,.98) !important;
+    border-color: rgba(117,137,164,.34) !important;
+}
+html:not(.dark) .assetflow-shell thead { background: rgba(212,222,235,.72) !important; }
+html:not(.dark) .assetflow-shell tbody tr:hover { background: rgba(204,222,241,.66) !important; }
+
+/* A mid-tone light surface avoids glare on bright laptop and phone displays. */
+html:not(.dark) body { background-color: #d3dae5 !important; }
+html:not(.dark) .assetflow-shell { background-color: #d3dae5 !important; }
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .glass-nav,
+html:not(.dark) .assetflow-shell .glass-nav {
+    background: linear-gradient(115deg,
+        rgba(218,226,237,.97), rgba(208,219,233,.95) 58%, rgba(216,213,229,.96)) !important;
+    border-color: rgba(108,127,154,.31) !important;
+}
+html:not(.dark) .glass-card {
+    background: linear-gradient(135deg,
+        rgba(224,231,240,.97), rgba(214,223,235,.96) 54%, rgba(208,220,234,.97)) !important;
+    border-color: rgba(108,127,154,.30) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.53), 0 8px 24px rgba(50,67,94,.08) !important;
+}
+html:not(.dark) .assetflow-login-overlay { background: rgba(211,218,229,.91) !important; }
+html:not(.dark) .assetflow-login-card {
+    background: linear-gradient(145deg, rgba(226,233,242,.98), rgba(209,220,234,.97)) !important;
+}
+html:not(.dark) .glass-input,
+html:not(.dark) .assetflow-shell .glass-input,
+html:not(.dark) .custom-select-trigger,
+html:not(.dark) .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(135deg, rgba(219,227,237,.98), rgba(205,216,230,.97)) !important;
+}
+html:not(.dark) .custom-select-menu,
+html:not(.dark) .assetflow-shell .custom-select-menu { background: rgba(221,229,239,.99) !important; }
+html:not(.dark) .assetflow-shell thead { background: rgba(204,215,230,.82) !important; }
+
+/* Slightly deeper slate for the light theme, plus room for the mobile brand bar. */
+html:not(.dark) body,
+html:not(.dark) .assetflow-shell { background-color: #bcc6d4 !important; }
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .glass-nav,
+html:not(.dark) .assetflow-shell .glass-nav {
+    background: linear-gradient(115deg,
+        rgba(198,209,223,.98), rgba(188,201,218,.97) 58%, rgba(197,194,213,.97)) !important;
+}
+html:not(.dark) .glass-card {
+    background: linear-gradient(135deg,
+        rgba(205,215,227,.98), rgba(194,206,221,.97) 54%, rgba(189,204,221,.98)) !important;
+}
+html:not(.dark) .glass-input,
+html:not(.dark) .assetflow-shell .glass-input,
+html:not(.dark) .custom-select-trigger,
+html:not(.dark) .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(135deg, rgba(198,209,223,.99), rgba(184,198,216,.98)) !important;
+}
+@media (max-width: 767px) {
+    .assetflow-shell .assetflow-mobile-backdrop { top: 3.5rem !important; }
+    .assetflow-shell aside { top: 3.5rem !important; bottom: 0 !important; }
+    .assetflow-shell { height: 100dvh !important; }
+    .assetflow-shell .overflow-x-auto {
+        max-width: 100%; -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain; scrollbar-width: thin;
+    }
+    .fixed.inset-0.z-50 > .glass-card,
+    .fixed.inset-0.z-\[60\] > .glass-card {
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+@media (min-width: 768px) {
+    .assetflow-shell .sidebar-body > div:first-child { display: none; }
+}
+@media (max-width: 420px) {
+    .assetflow-shell header .assetflow-top-label { display: none; }
+    .assetflow-shell header h1 { font-size: 15px !important; }
+}
+
+/* Keep the layout constant when switching palettes. */
+:root { color-scheme: light; }
+html.dark { color-scheme: dark; }
+html.dark body,
+html:not(.dark) body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+@media (min-width: 768px) {
+    html.dark .assetflow-shell aside,
+    html:not(.dark) .assetflow-shell aside { width: 12rem !important; }
+    html.dark .assetflow-shell .sidebar-body,
+    html:not(.dark) .assetflow-shell .sidebar-body { padding: 1rem !important; }
+    html.dark .assetflow-shell .sidebar-body > div:first-child,
+    html:not(.dark) .assetflow-shell .sidebar-body > div:first-child { display: none !important; }
+}
+
+@media (max-width: 767px) {
+    html.dark .assetflow-shell aside,
+    html:not(.dark) .assetflow-shell aside { width: 16rem !important; }
+}
+
+html.dark .assetflow-shell aside nav,
+html:not(.dark) .assetflow-shell aside nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+html.dark .assetflow-shell aside nav.space-y-1\.5 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .assetflow-shell aside nav.space-y-1\.5 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0;
+}
+html.dark .assetflow-shell aside nav a,
+html.dark .assetflow-shell aside nav > div > button,
+html:not(.dark) .assetflow-shell aside nav a,
+html:not(.dark) .assetflow-shell aside nav > div > button {
+    min-height: 34px;
+    padding: 7px 10px;
+    border-radius: 6px !important;
+    font-size: 13px;
+}
+html.dark .assetflow-shell .sidebar-footer,
+html:not(.dark) .assetflow-shell .sidebar-footer {
+    background: transparent !important;
+    border: 0 !important;
+    border-top: 1px solid var(--af-border) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 12px 8px !important;
+}
+
+html.dark .assetflow-shell header.glass-nav,
+html:not(.dark) .assetflow-shell header.glass-nav {
+    min-height: 52px;
+    height: 52px;
+    padding: 0 18px;
+}
+html.dark .assetflow-shell header h1,
+html:not(.dark) .assetflow-shell header h1 {
+    font-size: 19px;
+    font-weight: 650;
+    letter-spacing: -.025em;
+}
+
+html.dark .assetflow-shell [class*="rounded-3xl"],
+html.dark .assetflow-shell [class*="rounded-2xl"],
+html:not(.dark) .assetflow-shell [class*="rounded-3xl"],
+html:not(.dark) .assetflow-shell [class*="rounded-2xl"] {
+    border-radius: 10px !important;
+}
+html.dark .assetflow-shell .glass-card,
+html:not(.dark) .assetflow-shell .glass-card { border-radius: 12px !important; }
+
+@media (max-width: 767px) {
+    html.dark .assetflow-shell header.glass-nav,
+    html:not(.dark) .assetflow-shell header.glass-nav { padding-inline: 14px; }
+    html.dark .assetflow-shell header h1,
+    html:not(.dark) .assetflow-shell header h1 { font-size: 16px; }
+}
+@media (max-width: 420px) {
+    html.dark .assetflow-shell header h1,
+    html:not(.dark) .assetflow-shell header h1 { font-size: 15px; }
+}
+
+/* -------------------------------------------------------------------------
+   Vault-inspired AssetFlow finish
+   Shared layout and restrained surfaces keep both palettes familiar. These
+   are opaque surfaces with no backdrop filters, so dense pages stay smooth.
+   ------------------------------------------------------------------------- */
+:root {
+    --af-page: #101112;
+    --af-bar: #151617;
+    --af-panel: #1b1c1e;
+    --af-panel-raised: #222426;
+    --af-border: #303235;
+    --af-text: #f0f0f0;
+    --af-muted: #97999d;
+    --af-blue: #f04a25;
+    --af-blue-soft: rgba(240, 74, 37, .14);
+    --af-warm: #f04a25;
+}
+
+html:not(.dark) {
+    color-scheme: light;
+    --af-page: #e9edf2;
+    --af-bar: #f7f8fa;
+    --af-panel: #ffffff;
+    --af-panel-raised: #f2f4f7;
+    --af-border: #d8dde4;
+    --af-text: #20252b;
+    --af-muted: #66717d;
+    --af-blue: #e94724;
+    --af-blue-soft: rgba(233, 71, 36, .10);
+    --af-warm: #d94020;
+}
+
+html.dark { color-scheme: dark; }
+html body {
+    color: var(--af-text);
+    background: var(--af-page) !important;
+    transition: background-color .18s ease, color .18s ease;
+}
+html:not(.dark) body,
+html.dark body { background: var(--af-page) !important; background-image: none !important; }
+
+.assetflow-shell {
+    background: var(--af-page) !important;
+    color: var(--af-text);
+}
+html.dark .assetflow-shell,
+html:not(.dark) .assetflow-shell { background: var(--af-page) !important; background-image: none !important; }
+.assetflow-topbar,
+.assetflow-shell .glass-nav {
+    background: var(--af-bar) !important;
+    border-color: var(--af-border) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html.dark .assetflow-shell .glass-nav,
+html:not(.dark) .assetflow-shell .glass-nav,
+html.dark .assetflow-topbar,
+html:not(.dark) .assetflow-topbar { background: var(--af-bar) !important; }
+.assetflow-topbar { border-bottom: 1px solid var(--af-border); }
+.assetflow-shell header.glass-nav {
+    border-bottom: 1px solid var(--af-border) !important;
+}
+.assetflow-shell aside {
+    background: var(--af-bar) !important;
+    border-right-color: var(--af-border) !important;
+}
+.assetflow-shell aside nav a,
+.assetflow-shell aside nav > div > button {
+    color: var(--af-muted) !important;
+    transition: background-color .14s ease, color .14s ease;
+}
+.assetflow-shell aside nav a:hover,
+.assetflow-shell aside nav > div > button:hover {
+    color: var(--af-text) !important;
+    background: var(--af-panel-raised) !important;
+}
+.assetflow-shell aside nav a[aria-current="page"],
+.assetflow-shell aside nav a.bg-gradient-to-r {
+    color: var(--af-text) !important;
+    background: var(--af-blue-soft) !important;
+    box-shadow: inset 3px 0 0 var(--af-warm) !important;
+}
+html.dark .assetflow-shell aside nav a[aria-current="page"],
+html.dark .assetflow-shell aside nav a.bg-gradient-to-r,
+html:not(.dark) .assetflow-shell aside nav a[aria-current="page"],
+html:not(.dark) .assetflow-shell aside nav a.bg-gradient-to-r {
+    color: var(--af-text) !important;
+    background: var(--af-blue-soft) !important;
+    box-shadow: inset 3px 0 0 var(--af-warm) !important;
+}
+.assetflow-shell aside nav a > i,
+.assetflow-shell aside nav > div > button > i:first-child {
+    color: var(--af-muted) !important;
+}
+.assetflow-shell aside nav a[aria-current="page"] > i,
+.assetflow-shell aside nav a.bg-gradient-to-r > i { color: var(--af-warm) !important; }
+.assetflow-shell .sidebar-footer {
+    border-top-color: var(--af-border) !important;
+}
+
+.glass-card,
+html.dark .glass-card,
+html:not(.dark) .glass-card,
+html.dark .assetflow-shell .glass-card,
+html:not(.dark) .assetflow-shell .glass-card {
+    color: var(--af-text);
+    background: linear-gradient(145deg, var(--af-panel), color-mix(in srgb, var(--af-panel) 90%, var(--af-panel-raised))) !important;
+    border: 1px solid var(--af-border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: border-color .14s ease, background-color .14s ease;
+}
+.glass-card:hover,
+html.dark .assetflow-shell .glass-card:hover,
+html:not(.dark) .assetflow-shell .glass-card:hover {
+    border-color: color-mix(in srgb, var(--af-border) 55%, var(--af-warm)) !important;
+    box-shadow: none !important;
+}
+.assetflow-shell .glass-card .glass-card { background: var(--af-panel-raised) !important; }
+
+/* ── Table corners follow the card's rounded corners ──────────────────
+   Table headers/rows have square backgrounds. When the scroll wrapper is
+   flush against a rounded .glass-card edge, those square corners bleed past
+   the card's radius. The wrapper already has overflow-x:auto (which clips to
+   its border-radius), so matching the card's inner radius (card radius − 1px
+   border) on the flush edges makes the table corners round cleanly.
+   The inner radius tracks --af-card-radius so it stays in sync when the user
+   changes the Border-radius theme setting (see data-af-radius overrides).
+   :first-child rounds the top only when the table sits at the card top;
+   :last-child rounds the bottom only when no footer follows. */
+.glass-card > .overflow-x-auto:first-child {
+    border-top-left-radius: max(0px, calc(var(--af-card-radius, 12px) - 1px));
+    border-top-right-radius: max(0px, calc(var(--af-card-radius, 12px) - 1px));
+}
+.glass-card > .overflow-x-auto:last-child {
+    border-bottom-left-radius: max(0px, calc(var(--af-card-radius, 12px) - 1px));
+    border-bottom-right-radius: max(0px, calc(var(--af-card-radius, 12px) - 1px));
+}
+
+/* Lightweight global search palette */
+.command-palette { backdrop-filter: blur(20px); }
+.command-result { color: inherit; }
+.command-result:hover,
+.command-result-active { background: rgba(59, 130, 246, .11); }
+.dark .command-result:hover,
+.dark .command-result-active { background: rgba(96, 165, 250, .14); }
+.command-input { min-width: 0; }
+.command-palette kbd { padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(148, 163, 184, .35); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dashboard-welcome-name {
+    color: transparent !important;
+    background-image: linear-gradient(100deg, #3986c8 0%, #5865d9 52%, #8b5bc7 100%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+}
+.dashboard-welcome-icon {
+    margin-right: .35rem;
+    font-size: .72em;
+    vertical-align: .08em;
+    color: #6884df;
+}
+@media (prefers-reduced-motion: reduce) {
+  .command-result { transition: none !important; }
+}
+
+.assetflow-brand { color: var(--af-text) !important; }
+.assetflow-brand-mark { background: var(--af-warm) !important; border-radius: 7px !important; }
+.assetflow-top-label { color: var(--af-muted) !important; }
+.assetflow-icon-button {
+    color: var(--af-text) !important;
+    border-color: var(--af-border) !important;
+    border-radius: 8px !important;
+}
+.assetflow-icon-button:hover { background: var(--af-panel-raised) !important; }
+.assetflow-avatar { background: #5943a8 !important; }
+
+.assetflow-shell [class*="bg-gradient-to-"] { background-image: none !important; }
+.assetflow-shell button[class*="bg-gradient-to-"] {
+    color: white !important;
+    background: var(--af-warm) !important;
+    border: 1px solid color-mix(in srgb, var(--af-warm) 78%, white) !important;
+}
+html.dark .assetflow-shell button[class*="bg-gradient-to-"],
+html:not(.dark) .assetflow-shell button[class*="bg-gradient-to-"] {
+    color: white !important;
+    background: var(--af-warm) !important;
+    border: 1px solid color-mix(in srgb, var(--af-warm) 78%, white) !important;
+}
+.assetflow-shell button[class*="bg-gradient-to-"]:hover { filter: brightness(1.08); }
+.assetflow-shell .glass-input,
+.assetflow-shell .custom-select-trigger,
+.glass-input {
+    color: var(--af-text) !important;
+    background: var(--af-panel-raised) !important;
+    border: 1px solid var(--af-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.assetflow-shell .glass-input:focus,
+.assetflow-shell .glass-input:focus-visible,
+.assetflow-shell .custom-select-container.open .custom-select-trigger {
+    border-color: var(--af-warm) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--af-warm) 20%, transparent) !important;
+}
+.assetflow-shell .custom-select-menu {
+    color: var(--af-text) !important;
+    background: var(--af-panel) !important;
+    border-color: var(--af-border) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,.24) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.assetflow-shell .custom-select-option { color: var(--af-text) !important; }
+.assetflow-shell .custom-select-option:hover,
+.assetflow-shell .custom-select-option.selected {
+    color: var(--af-text) !important;
+    background: var(--af-blue-soft) !important;
+}
+
+html.dark .assetflow-shell .text-slate-900,
+html.dark .assetflow-shell .text-slate-800,
+html.dark .assetflow-shell .text-slate-700,
+html.dark .assetflow-shell .text-slate-600,
+html.dark .assetflow-shell .text-slate-300,
+html.dark .assetflow-shell .text-slate-200 { color: var(--af-text) !important; }
+html:not(.dark) .assetflow-shell .text-slate-900,
+html:not(.dark) .assetflow-shell .text-slate-800,
+html:not(.dark) .assetflow-shell .text-slate-700 { color: #28313b !important; }
+html:not(.dark) .assetflow-shell .text-slate-600,
+html:not(.dark) .assetflow-shell .text-slate-300,
+html:not(.dark) .assetflow-shell .text-slate-200 { color: #3e4955 !important; }
+html.dark .assetflow-shell .text-slate-500,
+html.dark .assetflow-shell .text-slate-400,
+html:not(.dark) .assetflow-shell .text-slate-500,
+html:not(.dark) .assetflow-shell .text-slate-400 { color: var(--af-muted) !important; }
+html.dark .assetflow-shell .text-indigo-300,
+html.dark .assetflow-shell .text-indigo-400,
+html.dark .assetflow-shell .text-indigo-500,
+html.dark .assetflow-shell .text-purple-400,
+html:not(.dark) .assetflow-shell .text-indigo-400,
+html:not(.dark) .assetflow-shell .text-indigo-500,
+html:not(.dark) .assetflow-shell .text-purple-400 { color: var(--af-warm) !important; }
+.assetflow-shell .bg-indigo-500\/10,
+.assetflow-shell .bg-indigo-500\/15,
+.assetflow-shell .bg-indigo-500\/20 { background-color: var(--af-blue-soft) !important; }
+.assetflow-shell .bg-indigo-600 { background-color: var(--af-warm) !important; }
+.assetflow-shell .border-white\/10,
+.assetflow-shell .border-slate-200\/50,
+.assetflow-shell .border-slate-200\/40,
+.assetflow-shell td,
+.assetflow-shell th { border-color: var(--af-border) !important; }
+.assetflow-shell thead { background: var(--af-panel-raised) !important; }
+.assetflow-shell tbody tr:hover { background: color-mix(in srgb, var(--af-panel-raised) 75%, var(--af-blue-soft)) !important; }
+.assetflow-shell .sidebar-footer .sidebar-user > div:first-child { background: #5943a8 !important; }
+
+html.dark .assetflow-login-overlay,
+html:not(.dark) .assetflow-login-overlay { background: color-mix(in srgb, var(--af-page) 88%, transparent) !important; backdrop-filter: none !important; }
+html.dark .assetflow-shell .assetflow-mobile-backdrop,
+html:not(.dark) .assetflow-shell .assetflow-mobile-backdrop,
+.fixed.inset-0.bg-slate-950\/70:not(.assetflow-login-overlay) { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+@media (max-width: 767px) {
+    .assetflow-shell .assetflow-mobile-backdrop { top: 3.5rem !important; background: rgba(0,0,0,.54) !important; }
+    .assetflow-shell aside { top: 3.5rem !important; bottom: 0 !important; }
+    .assetflow-shell { height: 100dvh !important; }
+    .assetflow-shell .sidebar-footer { margin-top: auto !important; }
+}
+
+/* Softer gradient finish with blue as the primary accent. */
+:root {
+    --af-page: #111316;
+    --af-bar: #17191d;
+    --af-panel: #202329;
+    --af-panel-raised: #282d34;
+    --af-border: #373d46;
+    --af-text: #f1f3f6;
+    --af-muted: #a3aab5;
+    --af-blue: #4f8fd0;
+    --af-blue-soft: rgba(79, 143, 208, .15);
+    --af-warm: #4f8fd0;
+}
+html:not(.dark) {
+    color-scheme: light;
+    --af-page: #f7f9fc;
+    --af-bar: #ffffff;
+    --af-panel: #ffffff;
+    --af-panel-raised: #f3f6fa;
+    --af-border: #e1e6ee;
+    --af-text: #202735;
+    --af-muted: #687488;
+    --af-blue: #397dbb;
+    --af-blue-soft: rgba(57, 125, 187, .10);
+    --af-warm: #397dbb;
+}
+html.dark body {
+    background: linear-gradient(135deg, #101216 0%, #171a20 56%, #13161b 100%) !important;
+}
+html:not(.dark) body {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 54%, #f1f5fa 100%) !important;
+}
+html.dark .assetflow-shell {
+    background: linear-gradient(135deg, #111317 0%, #171a20 100%) !important;
+}
+html:not(.dark) .assetflow-shell {
+    background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%) !important;
+}
+html.dark .assetflow-topbar,
+html.dark .assetflow-shell .glass-nav {
+    background: linear-gradient(110deg, #191c21, #17191d 62%, #1c1d23) !important;
+}
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .assetflow-shell .glass-nav {
+    background: linear-gradient(110deg, #ffffff, #fbfcfe 62%, #f4f7fb) !important;
+}
+html.dark .glass-card,
+html.dark .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, #252930 0%, #202329 58%, #1c1f24 100%) !important;
+    border-color: #373d46 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 8px 20px rgba(0,0,0,.12) !important;
+}
+html:not(.dark) .glass-card,
+html:not(.dark) .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, #ffffff 0%, #ffffff 55%, #f7f9fc 100%) !important;
+    border-color: #e1e6ee !important;
+    box-shadow: inset 0 1px 0 #fff, 0 7px 20px rgba(39,61,92,.045) !important;
+}
+html.dark .assetflow-shell aside,
+html.dark .assetflow-shell .glass-input,
+html.dark .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(155deg, #191c21, #15171b) !important;
+}
+html:not(.dark) .assetflow-shell aside,
+html:not(.dark) .assetflow-shell .glass-input,
+html:not(.dark) .assetflow-shell .custom-select-trigger {
+    background: linear-gradient(155deg, #ffffff, #f7f9fc) !important;
+}
+.assetflow-shell .glass-input,
+.assetflow-shell .custom-select-trigger,
+.glass-input { border-color: var(--af-border) !important; }
+html.dark .assetflow-shell .text-indigo-300,
+html.dark .assetflow-shell .text-indigo-400,
+html.dark .assetflow-shell .text-indigo-500,
+html.dark .assetflow-shell .text-purple-400,
+html:not(.dark) .assetflow-shell .text-indigo-400,
+html:not(.dark) .assetflow-shell .text-indigo-500,
+html:not(.dark) .assetflow-shell .text-purple-400 { color: var(--af-blue) !important; }
+.assetflow-shell .bg-indigo-500\/10,
+.assetflow-shell .bg-indigo-500\/15,
+.assetflow-shell .bg-indigo-500\/20 { background-color: var(--af-blue-soft) !important; }
+.assetflow-shell .bg-indigo-600 { background-color: var(--af-blue) !important; }
+html.dark .assetflow-shell aside nav a[aria-current="page"],
+html.dark .assetflow-shell aside nav a.bg-gradient-to-r,
+html:not(.dark) .assetflow-shell aside nav a[aria-current="page"],
+html:not(.dark) .assetflow-shell aside nav a.bg-gradient-to-r {
+    background: var(--af-blue-soft) !important;
+    box-shadow: inset 3px 0 0 var(--af-blue) !important;
+}
+html.dark .assetflow-shell aside nav a[aria-current="page"] > i,
+html.dark .assetflow-shell aside nav a.bg-gradient-to-r > i,
+html:not(.dark) .assetflow-shell aside nav a[aria-current="page"] > i,
+html:not(.dark) .assetflow-shell aside nav a.bg-gradient-to-r > i { color: var(--af-blue) !important; }
+.assetflow-brand-mark { background: linear-gradient(145deg, #4b94d3, #3975bd) !important; }
+.assetflow-shell button[class*="bg-gradient-to-"],
+html.dark .assetflow-shell button[class*="bg-gradient-to-"],
+html:not(.dark) .assetflow-shell button[class*="bg-gradient-to-"] {
+    background: linear-gradient(115deg, #397dbb, #506fca) !important;
+    border-color: rgba(61, 119, 190, .48) !important;
+}
+
+/* White glass gradients: a soft sheen and tiny blur, with nested surfaces kept clear. */
+html:not(.dark) {
+    --af-page: #ffffff;
+    --af-bar: rgba(255,255,255,.88);
+    --af-panel: rgba(255,255,255,.88);
+    --af-panel-raised: rgba(248,250,253,.94);
+    --af-border: rgba(177,190,208,.48);
+    --af-text: #202735;
+    --af-muted: #687488;
+}
+html:not(.dark) body,
+html:not(.dark) .assetflow-shell {
+    background: #ffffff !important;
+    background-image: radial-gradient(ellipse at 92% 0%, rgba(202,222,247,.16), transparent 34rem) !important;
+}
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .assetflow-shell header.glass-nav {
+    background: linear-gradient(110deg, rgba(255,255,255,.94), rgba(250,252,255,.88)) !important;
+    border-color: rgba(177,190,208,.42) !important;
+    backdrop-filter: blur(3px) saturate(108%) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(108%) !important;
+}
+html.dark .assetflow-topbar,
+html.dark .assetflow-shell header.glass-nav {
+    background: linear-gradient(110deg, rgba(28,31,37,.95), rgba(24,26,32,.91)) !important;
+    backdrop-filter: blur(3px) saturate(108%) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(108%) !important;
+}
+html.dark .glass-card,
+html.dark .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, rgba(43,47,56,.94), rgba(31,34,40,.91)) !important;
+    border-color: rgba(150,161,180,.23) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 8px 20px rgba(0,0,0,.10) !important;
+    backdrop-filter: blur(3px) saturate(108%) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(108%) !important;
+}
+html:not(.dark) .glass-card,
+html:not(.dark) .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(247,250,255,.86)) !important;
+    border-color: rgba(177,190,208,.48) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.98), 0 8px 22px rgba(50,76,112,.055) !important;
+    backdrop-filter: blur(3px) saturate(108%) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(108%) !important;
+}
+.assetflow-shell .glass-card .glass-card,
+.assetflow-shell .glass-card .glass-card .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Make the monochrome page gradient visibly read through the glass panels. */
+html.dark body,
+html.dark .assetflow-shell {
+    background-color: #101114 !important;
+    background-image: linear-gradient(132deg, #30343b 0%, #1d2026 38%, #111215 78%, #090a0c 100%) !important;
+}
+html:not(.dark) body,
+html:not(.dark) .assetflow-shell {
+    background-color: #ffffff !important;
+    background-image: linear-gradient(132deg, #ffffff 0%, #ffffff 28%, #f0f2f5 68%, #dfe3e9 100%) !important;
+}
+html.dark .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, rgba(61,66,75,.90) 0%, rgba(38,41,48,.90) 52%, rgba(25,27,32,.92) 100%) !important;
+}
+html:not(.dark) .assetflow-shell .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.88) 58%, rgba(241,244,248,.84) 100%) !important;
+}
+
+/* Keep the glass sheen in the gradients; avoid repaint-heavy blur passes. */
+.glass-card,
+.glass-nav,
+.assetflow-shell .glass-nav,
+html.dark .glass-card,
+html:not(.dark) .glass-card,
+html.dark .assetflow-shell .glass-card,
+html:not(.dark) .assetflow-shell .glass-card,
+html.dark .assetflow-topbar,
+html:not(.dark) .assetflow-topbar,
+html.dark .assetflow-shell header.glass-nav,
+html:not(.dark) .assetflow-shell header.glass-nav,
+.backdrop-blur-sm,
+.backdrop-blur,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.animate-ping { animation: none !important; }
+
+/* Compact glass switch for the persisted light/dark theme setting. */
+.assetflow-theme-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 72px;
+    height: 36px;
+    padding: 3px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(131, 151, 184, .28);
+    border-radius: 999px;
+    color: #67758e;
+    background: linear-gradient(135deg, rgba(231, 239, 255, .92), rgba(255, 255, 255, .86));
+    box-shadow: inset 0 1px 4px rgba(67, 93, 143, .12), 0 2px 8px rgba(60, 86, 132, .08);
+    transition: background .24s ease, border-color .24s ease, box-shadow .24s ease;
+}
+.assetflow-theme-switch:hover { box-shadow: inset 0 1px 4px rgba(67, 93, 143, .16), 0 3px 10px rgba(60, 86, 132, .12); }
+.assetflow-theme-switch:focus-visible { outline: 2px solid #648cf4; outline-offset: 3px; }
+.assetflow-theme-choice {
+    z-index: 1;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    font-size: 12px;
+    transition: color .2s ease;
+}
+.assetflow-theme-switch:not(.is-dark) .theme-light { color: rgba(255,255,255,.94); }
+.assetflow-theme-switch:not(.is-dark) .theme-dark { color: rgba(94,108,135,.48); }
+.assetflow-theme-thumb {
+    position: absolute;
+    z-index: 2;
+    top: 3px;
+    left: 3px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.44);
+    border-radius: 50%;
+    color: white;
+    background: linear-gradient(145deg, #7b9bff, #5578e8);
+    box-shadow: 0 3px 8px rgba(73, 103, 202, .34), inset 0 1px 1px rgba(255,255,255,.42);
+    transition: transform .26s cubic-bezier(.2,.8,.2,1), color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.assetflow-theme-switch.is-dark {
+    border-color: rgba(205, 205, 220, .18);
+    color: #bbc2d1;
+    background: linear-gradient(135deg, rgba(52,55,64,.96), rgba(29,31,37,.96));
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.18);
+}
+.assetflow-theme-switch.is-dark .theme-light { color: rgba(199,205,218,.46); }
+.assetflow-theme-switch.is-dark .theme-dark { color: rgba(49,51,58,.74); }
+.assetflow-theme-switch.is-dark .assetflow-theme-thumb {
+    color: #4d4a3e;
+    background: linear-gradient(145deg, #f2e4ad, #c9b77e);
+    border-color: rgba(255,255,255,.48);
+    box-shadow: 0 3px 9px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.76);
+    transform: translateX(38px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .assetflow-theme-switch,
+    .assetflow-theme-choice,
+    .assetflow-theme-thumb { transition: none; }
+}
+
+/* Short, transform-only motion keeps the dashboard lively without animated
+   blur, large shadows, or continuous effects that can make scrolling stutter. */
+@keyframes assetflow-soft-enter {
+    from { opacity: 0; transform: translate3d(0, 8px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.dashboard-kpi-card,
+.dashboard-chart-card {
+    animation: assetflow-soft-enter .34s cubic-bezier(.2,.7,.25,1) both;
+}
+.dashboard-kpi-card:nth-child(1) { animation-delay: 20ms; }
+.dashboard-kpi-card:nth-child(2) { animation-delay: 60ms; }
+.dashboard-kpi-card:nth-child(3) { animation-delay: 100ms; }
+.dashboard-kpi-card:nth-child(4) { animation-delay: 140ms; }
+.dashboard-chart-card { animation-delay: 150ms; }
+
+.assetflow-shell .glass-card {
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .assetflow-shell .glass-card:hover { transform: translate3d(0, -2px, 0); }
+}
+.assetflow-shell button:not(:disabled):active,
+.assetflow-shell a[href]:active { transform: scale(.98); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* Shared cool glass gradients for the sidebar and both navigation bars. */
+html.dark .assetflow-shell aside.glass-nav {
+    background: linear-gradient(155deg, #414141 0%, #252525 52%, #080808 100%) !important;
+    border-right-color: rgba(255, 255, 255, .2) !important;
+}
+html.dark .assetflow-topbar,
+html.dark .assetflow-shell header.glass-nav {
+    background: linear-gradient(105deg, #383838 0%, #202020 54%, #050505 100%) !important;
+    border-color: rgba(255, 255, 255, .18) !important;
+}
+html:not(.dark) .assetflow-shell aside.glass-nav {
+    background: linear-gradient(155deg, #ffffff 0%, #e9e9e9 52%, #cccccc 100%) !important;
+    border-right-color: rgba(50, 50, 50, .24) !important;
+}
+html:not(.dark) .assetflow-topbar,
+html:not(.dark) .assetflow-shell header.glass-nav {
+    background: linear-gradient(105deg, #ffffff 0%, #f1f1f1 52%, #dddddd 100%) !important;
+    border-color: rgba(50, 50, 50, .22) !important;
+}
+
+/* ======================================================================
+   THEME SETTINGS  (color presets · font · border radius · density)
+   Layered on top of the existing dark/light system via data-af-* attrs
+   on <html>. Accent-only presets: surfaces still follow light/dark, only
+   the accent (buttons, highlights, active states) changes.
+   ====================================================================== */
+
+/* Accent defaults — used by the panel and by preset overrides. */
+:root { --af-accent: #6366f1; --af-accent-2: #a855f7; }
+
+/* ---- Slide-over panel ---- */
+.af-theme-panel {
+    background: var(--af-panel, #fff);
+    border-left: 1px solid var(--af-border, rgba(0,0,0,.1));
+    color: var(--af-text, #20252b);
+    animation: afPanelIn .22s cubic-bezier(.22,.61,.36,1);
+}
+@keyframes afPanelIn { from { transform: translateX(28px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.af-section-title {
+    font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--af-muted, #66717d); margin-bottom: 10px;
+}
+.af-opt {
+    position: relative;
+    border: 2px solid var(--af-border, #d8dde4);
+    border-radius: 14px;
+    background: var(--af-panel-raised, #f2f4f7);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .1s ease;
+    cursor: pointer;
+}
+.af-opt:hover { border-color: color-mix(in srgb, var(--af-accent) 55%, var(--af-border)); }
+.af-opt:active { transform: translateY(1px); }
+.af-opt.af-selected {
+    border-color: var(--af-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--af-accent) 30%, transparent);
+}
+.af-check {
+    position: absolute; top: -9px; right: -9px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--af-accent); color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+
+/* ---- Color presets: define the accent, remap shell accent vars ---- */
+html[data-af-preset="anthropic"]   { --af-accent: #d97757; --af-accent-2: #c15f3c; }
+html[data-af-preset="simple"]      { --af-accent: #475569; --af-accent-2: #0f172a; }
+html[data-af-preset="underground"] { --af-accent: #6b7280; --af-accent-2: #78716c; }
+html[data-af-preset="rose"]        { --af-accent: #f43f5e; --af-accent-2: #fb7185; }
+html[data-af-preset="lake"]        { --af-accent: #10b981; --af-accent-2: #14b8a6; }
+html[data-af-preset="sunset"]      { --af-accent: #f97316; --af-accent-2: #fb923c; }
+html[data-af-preset="forest"]      { --af-accent: #0d9488; --af-accent-2: #15803d; }
+html[data-af-preset="ocean"]       { --af-accent: #3b82f6; --af-accent-2: #6366f1; }
+html[data-af-preset="lavender"]    { --af-accent: #a78bfa; --af-accent-2: #c084fc; }
+
+html[data-af-preset]:not([data-af-preset="default"]) {
+    --af-blue: var(--af-accent);
+    --af-warm: var(--af-accent);
+    --af-blue-soft: color-mix(in srgb, var(--af-accent) 14%, transparent);
+}
+
+/* ---- Accent-utility overrides: recolor indigo/purple accents to preset ---- */
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .from-indigo-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .from-indigo-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .from-blue-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .from-blue-500 {
+    --tw-gradient-from: var(--af-accent) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: color-mix(in srgb, var(--af-accent) 0%, transparent) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .to-purple-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .to-purple-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .to-pink-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .to-pink-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .to-fuchsia-500 {
+    --tw-gradient-to: var(--af-accent-2) var(--tw-gradient-to-position) !important;
+}
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .bg-indigo-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .bg-indigo-700,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .bg-indigo-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .bg-blue-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .bg-blue-500 {
+    background-color: var(--af-accent) !important;
+}
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-indigo-400,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-indigo-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-indigo-600,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-blue-400,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-blue-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .text-blue-600 {
+    color: var(--af-accent) !important;
+}
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .border-indigo-500,
+html[data-af-preset]:not([data-af-preset="default"]) .assetflow-shell .border-blue-500 {
+    border-color: var(--af-accent) !important;
+}
+
+/* ---- Font ----
+   The global `*` rule (top of file) sets font-family directly on every
+   element, so overriding only <body>/.assetflow-shell won't cascade — we
+   must target descendants too. Icons (Font Awesome) and mono text are
+   excluded so glyphs and code keep their own faces. */
+html[data-af-font="serif"] body,
+html[data-af-font="serif"] .assetflow-shell,
+html[data-af-font="serif"] .assetflow-shell *:not([class*="fa-"]):not(.fa):not(.font-mono) {
+    font-family: Georgia, 'Times New Roman', serif !important;
+}
+
+/* ---- Border radius scale ---- */
+/* ---- Border radius scale ----
+   Each level also sets --af-card-radius so the table scroll-wrapper's inner
+   corner rounding (above) stays in sync with the card and content never
+   bleeds past the card edge. */
+html[data-af-radius="0"]    { --af-card-radius: 0px; }
+html[data-af-radius="0.3"]  { --af-card-radius: 6px; }
+html[data-af-radius="0.5"]  { --af-card-radius: 10px; }
+html[data-af-radius="0.75"] { --af-card-radius: 15px; }
+html[data-af-radius="1"]    { --af-card-radius: 20px; }
+html[data-af-radius="0"]    .assetflow-shell .glass-card, html[data-af-radius="0"]    .assetflow-shell [class*="rounded-3xl"], html[data-af-radius="0"]    .assetflow-shell [class*="rounded-2xl"], html[data-af-radius="0"]    .assetflow-shell [class*="rounded-xl"], html[data-af-radius="0"]    .assetflow-shell .glass-input { border-radius: 0px !important; }
+html[data-af-radius="0.3"]  .assetflow-shell .glass-card, html[data-af-radius="0.3"]  .assetflow-shell [class*="rounded-3xl"], html[data-af-radius="0.3"]  .assetflow-shell [class*="rounded-2xl"], html[data-af-radius="0.3"]  .assetflow-shell [class*="rounded-xl"], html[data-af-radius="0.3"]  .assetflow-shell .glass-input { border-radius: 6px !important; }
+html[data-af-radius="0.5"]  .assetflow-shell .glass-card, html[data-af-radius="0.5"]  .assetflow-shell [class*="rounded-3xl"], html[data-af-radius="0.5"]  .assetflow-shell [class*="rounded-2xl"], html[data-af-radius="0.5"]  .assetflow-shell [class*="rounded-xl"], html[data-af-radius="0.5"]  .assetflow-shell .glass-input { border-radius: 10px !important; }
+html[data-af-radius="0.75"] .assetflow-shell .glass-card, html[data-af-radius="0.75"] .assetflow-shell [class*="rounded-3xl"], html[data-af-radius="0.75"] .assetflow-shell [class*="rounded-2xl"], html[data-af-radius="0.75"] .assetflow-shell [class*="rounded-xl"], html[data-af-radius="0.75"] .assetflow-shell .glass-input { border-radius: 15px !important; }
+html[data-af-radius="1"]    .assetflow-shell .glass-card, html[data-af-radius="1"]    .assetflow-shell [class*="rounded-3xl"], html[data-af-radius="1"]    .assetflow-shell [class*="rounded-2xl"], html[data-af-radius="1"]    .assetflow-shell [class*="rounded-xl"], html[data-af-radius="1"]    .assetflow-shell .glass-input { border-radius: 20px !important; }
+
+/* ---- Density (root font-size scaling) ---- */
+html[data-af-density="compact"]     { font-size: 14.5px; }
+html[data-af-density="comfortable"] { font-size: 17px; }
+
+/* ---- Shadow depth on cards (light + dark variants) ---- */
+html[data-af-shadow="none"] .assetflow-shell .glass-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+html[data-af-shadow="soft"] .assetflow-shell .glass-card {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+html[data-af-shadow="strong"] .assetflow-shell .glass-card {
+    box-shadow: 0 32px 70px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+html.dark[data-af-shadow="none"] .assetflow-shell .glass-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+html.dark[data-af-shadow="soft"] .assetflow-shell .glass-card {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+html.dark[data-af-shadow="strong"] .assetflow-shell .glass-card {
+    box-shadow: 0 36px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 28px rgba(129, 140, 248, 0.08) !important;
+}
+
+/* ---- Glass gradient / blur intensity on cards ---- */
+html[data-af-glass="flat"] .assetflow-shell .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+html[data-af-glass="subtle"] .assetflow-shell .glass-card {
+    backdrop-filter: blur(4px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(4px) saturate(120%) !important;
+}
+html[data-af-glass="vivid"] .assetflow-shell .glass-card {
+    backdrop-filter: blur(16px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(190%) !important;
+}
+/* Flat also drops the see-through gradient for a solid, crisp surface. */
+html[data-af-glass="flat"] .assetflow-shell .glass-card {
+    background: linear-gradient(135deg, #eef1f5 0%, #e2e7ee 100%) !important;
+}
+html.dark[data-af-glass="flat"] .assetflow-shell .glass-card {
+    background: linear-gradient(135deg, #1e293b 0%, #131c2e 100%) !important;
+}
+
+
+/* ---- Cursor style toggle ----
+   When "System" is chosen, fall back to the native OS cursor. These selectors
+   are attribute-prefixed so they out-specify the global `* { cursor: ... !important }`
+   and interactive-element pointer rules at the top of this file. */
+html[data-af-cursor="system"] * {
+    cursor: auto !important;
+}
+html[data-af-cursor="system"] button,
+html[data-af-cursor="system"] select,
+html[data-af-cursor="system"] a,
+html[data-af-cursor="system"] label,
+html[data-af-cursor="system"] summary,
+html[data-af-cursor="system"] [role="button"],
+html[data-af-cursor="system"] .cursor-pointer,
+html[data-af-cursor="system"] .custom-select-trigger,
+html[data-af-cursor="system"] .custom-select-option {
+    cursor: pointer !important;
+}
+html[data-af-cursor="system"] input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="file"]),
+html[data-af-cursor="system"] textarea {
+    cursor: text !important;
+}
+html[data-af-cursor="system"] [disabled],
+html[data-af-cursor="system"] .disabled\:opacity-40:disabled,
+html[data-af-cursor="system"] button:disabled {
+    cursor: not-allowed !important;
+}
+
+/* Notification popover: colored glass with a solid enough surface for legibility. */
+.assetflow-shell .notification-panel {
+    background: linear-gradient(145deg, rgba(255,255,255,.97), rgba(239,246,255,.94) 52%, rgba(245,243,255,.96)) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(145%);
+    backdrop-filter: blur(24px) saturate(145%);
+    border-color: rgba(99, 130, 180, .28) !important;
+    isolation: isolate;
+}
+html.dark .assetflow-shell .notification-panel {
+    background: linear-gradient(145deg, rgba(25,31,42,.97), rgba(29,38,54,.96) 52%, rgba(37,31,54,.96)) !important;
+    border-color: rgba(148, 170, 205, .24) !important;
+}
+
+@media (max-width: 767px) {
+    .assetflow-shell .notification-panel {
+        position: fixed !important;
+        inset: 4rem .5rem auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100dvh - 4.75rem) !important;
+        margin-top: 0 !important;
+        display: flex;
+        flex-direction: column;
+    }
+    .assetflow-shell .notification-list {
+        min-height: 0;
+        max-height: none !important;
+        flex: 1 1 auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

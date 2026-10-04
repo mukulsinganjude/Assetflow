@@ -1,0 +1,229 @@
+<!-- ============================================================= -->
+<!--  AssetFlow marketing landing page (logged-out experience)     -->
+<!--  Flat "Claro"-style design: off-white canvas, white cards,     -->
+<!--  green primary + orange secondary accents.                     -->
+<!-- ============================================================= -->
+<div class="min-h-screen w-full overflow-x-hidden text-slate-800 dark:text-slate-100">
+
+  <!-- ===================== TOP NAV ===================== -->
+  <header class="sticky top-0 z-40 glass-nav">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#23924A] to-[#4CBB6E] text-white flex items-center justify-center shadow-md shadow-green-600/30">
+          <i class="fa-solid fa-cubes"></i>
+        </div>
+        <span class="text-lg font-black tracking-tight">Asset<span class="text-[#23924A]">Flow</span></span>
+      </div>
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500 dark:text-slate-300">
+        <a href="#features" (click)="closeMobileNav()" class="hover:text-[#23924A] transition">Features</a>
+        <a href="#roles" (click)="closeMobileNav()" class="hover:text-[#23924A] transition">Roles</a>
+        <a href="#showcase" (click)="closeMobileNav()" class="hover:text-[#23924A] transition">Product</a>
+        <a href="#security" (click)="closeMobileNav()" class="hover:text-[#23924A] transition">Security</a>
+      </nav>
+      <div class="flex items-center gap-2.5">
+        <button type="button" (click)="toggleTheme()" class="glass-card w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-200" aria-label="Toggle theme" title="Toggle theme">
+          <i [class]="theme.isDark() ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm'" aria-hidden="true"></i>
+        </button>
+        <button (click)="openLogin()" class="hidden sm:inline-flex btn-secondary !py-2.5 !px-5 !text-sm">Login</button>
+        <button (click)="openLogin()" class="btn-dark !py-2.5 !px-5 !text-sm">Get Started <i class="fa-solid fa-arrow-right text-xs"></i></button>
+        <button type="button" (click)="toggleMobileNav()" class="md:hidden glass-card w-10 h-10 rounded-xl flex items-center justify-center" aria-label="Toggle section navigation" aria-controls="landing-mobile-nav" [attr.aria-expanded]="mobileNavOpen">
+          <i class="fa-solid" [class.fa-xmark]="mobileNavOpen" [class.fa-bars]="!mobileNavOpen" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <nav *ngIf="mobileNavOpen" id="landing-mobile-nav" aria-label="Page sections" class="md:hidden absolute top-full inset-x-4 mt-2 p-2 rounded-2xl glass-card shadow-xl flex flex-col text-sm font-semibold">
+      <a href="#features" (click)="closeMobileNav()" class="px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10">Features</a>
+      <a href="#roles" (click)="closeMobileNav()" class="px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10">Roles</a>
+      <a href="#showcase" (click)="closeMobileNav()" class="px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10">Product</a>
+      <a href="#security" (click)="closeMobileNav()" class="px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10">Security</a>
+    </nav>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="max-w-7xl mx-auto px-5 sm:px-8 pt-14 md:pt-20 pb-10 grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
+    <div class="animate-fade-in">
+      <span class="tag-pill mb-5"><i class="fa-solid fa-bolt"></i> Enterprise IT &amp; Infrastructure Suite</span>
+      <h1 class="text-4xl sm:text-5xl lg:text-[3.4rem] font-black tracking-tight leading-[1.05]">
+        Smarter Hardware<br>Asset Management<br>for Modern IT Teams
+      </h1>
+      <p class="mt-5 text-slate-500 dark:text-slate-400 text-base leading-relaxed max-w-md">
+        Track every device, assignment, warranty and audit in one clean workspace. AssetFlow keeps your fleet accurate, accountable and always ready.
+      </p>
+      <div class="mt-7 flex flex-wrap items-center gap-3">
+        <button (click)="openLogin()" class="btn-primary">Get Started <i class="fa-solid fa-arrow-right text-xs"></i></button>
+        <a href="#features" class="btn-secondary">Explore Features</a>
+      </div>
+      <div class="mt-8 flex items-center gap-6 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[#23924A]"></i> Role-based access</span>
+        <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[#23924A]"></i> QR asset tagging</span>
+        <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[#23924A]"></i> Audit trail</span>
+      </div>
+    </div>
+
+    <!-- Dashboard preview cluster -->
+    <div class="relative animate-fade-in">
+      <div class="glass-card rounded-[1.75rem] p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <p class="text-xs font-semibold text-slate-400">Fleet Overview</p>
+            <p class="text-2xl font-black tracking-tight">1,284 <span class="text-sm font-bold text-[#23924A]">assets</span></p>
+          </div>
+          <span class="tag-pill"><i class="fa-solid fa-arrow-trend-up"></i> +6.2%</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-5">
+          <div class="glass-card rounded-2xl p-3 text-center">
+            <p class="text-lg font-black text-[#23924A]">942</p>
+            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Assigned</p>
+          </div>
+          <div class="glass-card rounded-2xl p-3 text-center">
+            <p class="text-lg font-black text-[#D65F1E]">27</p>
+            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Warranty</p>
+          </div>
+          <div class="glass-card rounded-2xl p-3 text-center">
+            <p class="text-lg font-black text-slate-700 dark:text-slate-200">315</p>
+            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">In Stock</p>
+          </div>
+        </div>
+        <!-- faux bar chart -->
+        <div class="flex items-end justify-between gap-2 h-28 px-1">
+          <div class="w-full rounded-t-lg bg-[#23924A]" style="height:82%"></div>
+          <div class="w-full rounded-t-lg bg-[#4CBB6E]" style="height:64%"></div>
+          <div class="w-full rounded-t-lg bg-[#EE8B42]" style="height:48%"></div>
+          <div class="w-full rounded-t-lg bg-[#4CBB6E]" style="height:70%"></div>
+          <div class="w-full rounded-t-lg bg-[#23924A]" style="height:90%"></div>
+          <div class="w-full rounded-t-lg bg-[#E7F6EC] dark:bg-white/10" style="height:38%"></div>
+          <div class="w-full rounded-t-lg bg-[#4CBB6E]" style="height:56%"></div>
+        </div>
+      </div>
+      <!-- floating mini card -->
+      <div class="glass-card rounded-2xl p-3.5 absolute -bottom-5 -left-3 sm:-left-6 w-52 hidden sm:flex items-center gap-3">
+        <div class="icon-tile !w-10 !h-10 !rounded-xl !text-base"><i class="fa-solid fa-qrcode"></i></div>
+        <div>
+          <p class="text-xs font-black leading-none">QR Tagged</p>
+          <p class="text-[11px] text-slate-400 font-medium mt-1">Scan to retrieve specs</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section id="features" class="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <span class="tag-pill mb-4">Core modules</span>
+      <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Everything You Need to Run a Smarter Fleet</h2>
+      <p class="mt-4 text-slate-500 dark:text-slate-400">Six purpose-built modules cover the full lifecycle of every device — from first registration to final offboarding.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div *ngFor="let f of features" class="glass-card rounded-3xl p-6 group">
+        <div class="icon-tile mb-4" [class.tile-orange]="f.tile === 'orange'">
+          <i class="fa-solid" [ngClass]="f.icon"></i>
+        </div>
+        <h3 class="text-lg font-black tracking-tight mb-2">{{ f.title }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ f.desc }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ROLES ===================== -->
+  <section id="roles" class="bg-white dark:bg-[#111418] border-y border-[#ECEBE4] dark:border-white/5">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="tag-pill mb-4">Access control</span>
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Built for Every Person on Your Team</h2>
+        <p class="mt-4 text-slate-500 dark:text-slate-400 leading-relaxed max-w-md">
+          Granular role-based permissions mean everyone sees exactly what they need — nothing more. Assign the right level of control from day one.
+        </p>
+        <button (click)="openLogin()" class="btn-primary mt-7">Start Managing <i class="fa-solid fa-arrow-right text-xs"></i></button>
+      </div>
+      <div class="space-y-3.5">
+        <div *ngFor="let r of roles" class="glass-card rounded-2xl p-5 flex items-start gap-4"
+             [ngClass]="r.highlight ? 'ring-2 ring-[#23924A]' : ''">
+          <div class="icon-tile !rounded-xl"><i class="fa-solid" [ngClass]="r.icon"></i></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2.5">
+              <h3 class="font-black tracking-tight">{{ r.name }}</h3>
+              <span class="tag-pill !py-0.5 !px-2 !text-[10px]">{{ r.tag }}</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{{ r.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SHOWCASE ===================== -->
+  <section id="showcase" class="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <span class="tag-pill mb-4">The dashboard</span>
+      <h2 class="text-3xl sm:text-4xl font-black tracking-tight">See Everything. Manage Everything.</h2>
+      <p class="mt-4 text-slate-500 dark:text-slate-400">One overview ties together assets, people, warranties and activity in real time.</p>
+    </div>
+    <div class="glass-card rounded-[1.75rem] p-4 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5 px-1">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-[#EE8B42]"></span>
+          <span class="w-3 h-3 rounded-full bg-[#4CBB6E]"></span>
+          <span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-white/20"></span>
+          <span class="ml-2 text-xs font-bold text-slate-400">Hardware Fleet Overview</span>
+        </div>
+        <span class="tag-pill"><i class="fa-solid fa-circle-check"></i> Live</span>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-4 mb-4">
+        <div class="glass-card rounded-2xl p-4">
+          <p class="text-xs font-semibold text-slate-400">Total Assets</p>
+          <p class="text-2xl font-black mt-1">1,284</p>
+          <div class="mt-3 h-1.5 rounded-full bg-[#E7F6EC] dark:bg-white/10 overflow-hidden"><div class="h-full bg-[#23924A]" style="width:78%"></div></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+          <p class="text-xs font-semibold text-slate-400">Assigned</p>
+          <p class="text-2xl font-black mt-1 text-[#23924A]">942</p>
+          <div class="mt-3 h-1.5 rounded-full bg-[#E7F6EC] dark:bg-white/10 overflow-hidden"><div class="h-full bg-[#4CBB6E]" style="width:64%"></div></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+          <p class="text-xs font-semibold text-slate-400">Warranty Alerts</p>
+          <p class="text-2xl font-black mt-1 text-[#D65F1E]">27</p>
+          <div class="mt-3 h-1.5 rounded-full bg-[#FCE9D9] dark:bg-white/10 overflow-hidden"><div class="h-full bg-[#E5722A]" style="width:22%"></div></div>
+        </div>
+      </div>
+      <div id="security" class="glass-card rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div class="icon-tile"><i class="fa-solid fa-lock"></i></div>
+        <div class="flex-1">
+          <h3 class="font-black tracking-tight">Secure by design</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">JWT-authenticated sessions, hashed credentials and a complete activity trail on every change.</p>
+        </div>
+        <button (click)="openLogin()" class="btn-secondary whitespace-nowrap">Sign In</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA BANNER ===================== -->
+  <section class="max-w-7xl mx-auto px-5 sm:px-8 pb-16 md:pb-24">
+    <div class="rounded-[2rem] p-10 md:p-16 text-center relative overflow-hidden bg-gradient-to-br from-[#EE8B42] via-[#4CBB6E] to-[#23924A]">
+      <div class="relative z-10 max-w-xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-white">Ready to Take Control of Your Fleet?</h2>
+        <p class="mt-4 text-white/90 font-medium">Bring every asset and assignment into one accountable workspace — starting today.</p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <button (click)="openLogin()" class="btn-dark !bg-white !text-[#16201A] hover:!bg-white/90">Get Started <i class="fa-solid fa-arrow-right text-xs"></i></button>
+          <button (click)="openLogin()" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm text-white border border-white/60 hover:bg-white/10 transition">Login</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="border-t border-[#ECEBE4] dark:border-white/5">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#23924A] to-[#4CBB6E] text-white flex items-center justify-center text-sm"><i class="fa-solid fa-cubes"></i></div>
+        <span class="font-black tracking-tight">Asset<span class="text-[#23924A]">Flow</span></span>
+      </div>
+      <p class="text-xs text-slate-400 font-medium">Enterprise IT &amp; Infrastructure Suite &middot; &copy; {{ year }} AssetFlow. All rights reserved.</p>
+      <div class="flex items-center gap-5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <a href="#features" class="hover:text-[#23924A] transition">Features</a>
+        <a href="#roles" class="hover:text-[#23924A] transition">Roles</a>
+        <a href="#security" class="hover:text-[#23924A] transition">Security</a>
+      </div>
+    </div>
+  </footer>
+
+</div>

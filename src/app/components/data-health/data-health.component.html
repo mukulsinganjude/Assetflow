@@ -1,0 +1,57 @@
+<div class="p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 animate-fade-in">
+  <!-- SCORE HEADER -->
+  <div class="glass-card rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+    <div [class]="scoreRingClass()" class="w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center shrink-0">
+      <span [class]="scoreClass()" class="text-3xl font-black leading-none">{{ healthScore() }}</span>
+      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Score</span>
+    </div>
+    <div class="flex-1 text-center md:text-left">
+      <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Data-Health Panel</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+        A one-glance check of your asset records. {{ affectedCount() }} of {{ totalAssets() }} asset(s) flagged across {{ issues().length - cleanIssues() }} of {{ issues().length }} checks.
+      </p>
+    </div>
+    <button (click)="exportIssues()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-xs shadow-lg shrink-0">
+      <i class="fa-solid fa-file-arrow-down"></i><span>Export Report</span>
+    </button>
+  </div>
+
+  <!-- ALL CLEAN STATE -->
+  <div *ngIf="totalIssues() === 0" class="glass-card rounded-3xl p-10 text-center">
+    <div class="w-16 h-16 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-3xl mx-auto mb-4"><i class="fa-solid fa-circle-check"></i></div>
+    <h3 class="text-lg font-black text-slate-900 dark:text-white">Your data looks clean</h3>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">No duplicate serials, orphaned records, or missing key fields were found.</p>
+  </div>
+
+  <!-- ISSUE CARDS -->
+  <div class="space-y-3">
+    <div *ngFor="let iss of issues()" class="glass-card rounded-2xl overflow-hidden">
+      <button (click)="toggle(iss.key)" class="w-full flex items-center gap-4 p-4 text-left transition hover:bg-white/40 dark:hover:bg-white/5">
+        <div [class]="iconClass(iss.tone)" class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg shrink-0">
+          <i class="fa-solid" [ngClass]="iss.assets.length === 0 ? 'fa-circle-check text-emerald-500' : iss.icon"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-slate-900 dark:text-white truncate">{{ iss.title }}</h3>
+            <span [class]="countClass(iss.tone, iss.assets.length)" class="text-sm font-black">{{ iss.assets.length }}</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ iss.description }}</p>
+        </div>
+        <i *ngIf="iss.assets.length > 0" class="fa-solid text-slate-400 transition" [ngClass]="isExpanded(iss.key) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </button>
+
+      <div *ngIf="isExpanded(iss.key) && iss.assets.length > 0" class="border-t border-slate-200/50 dark:border-white/10 divide-y divide-slate-200/40 dark:divide-white/5">
+        <a *ngFor="let a of iss.assets" [routerLink]="['/employees', a.assignedTo]" class="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-white/40 dark:hover:bg-white/5 transition">
+          <div class="min-w-0">
+            <div class="font-semibold text-slate-800 dark:text-slate-100 truncate">{{ a.name }}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              <span class="font-mono text-indigo-400">{{ a.serial }}</span>
+              <span *ngIf="iss.detail" class="ml-2">· {{ iss.detail(a) }}</span>
+            </div>
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 shrink-0">{{ a.assignedTo || 'Stock' }}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

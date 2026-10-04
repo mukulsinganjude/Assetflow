@@ -1,0 +1,33 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+  <div class="glass-card rounded-3xl">
+    <div class="p-6 border-b border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div><h1 class="text-xl font-black text-slate-800 dark:text-white"><i class="fa-solid fa-box-archive text-indigo-400 mr-2"></i>Former Employees</h1><p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Offboarding snapshots for reference. Returned equipment is marked Stock and kept in the active inventory.</p></div>
+      <button *ngIf="auth.can('formerEmployees.export')" type="button" (click)="exportExcel()" [disabled]="pageResult().total === 0" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md disabled:opacity-40 transition"><i class="fa-solid fa-file-arrow-down mr-1"></i>Export</button>
+    </div>
+    <div class="p-5 border-b border-slate-200/50 dark:border-white/10">
+      <div class="relative w-full sm:max-w-sm"><i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i><input [ngModel]="search()" (ngModelChange)="onSearch($event)" placeholder="Search name, CCIID, model, or serial" class="glass-input w-full rounded-xl pl-9 pr-3 py-2.5 text-sm dark:text-white"></div>
+    </div>
+    <p *ngIf="data.formerEmployeesError()" class="mx-5 mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500">{{ data.formerEmployeesError() }}</p>
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[760px] text-left border-collapse">
+        <thead><tr class="bg-white/30 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400"><th class="p-4 cursor-pointer select-none" (click)="sort('cciId')">CCIID <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer select-none" (click)="sort('name')">Name <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer select-none" (click)="sort('department')">Department <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer select-none" (click)="sort('assets')">Assets Held <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 text-right">Actions</th></tr></thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <ng-container *ngFor="let row of filtered()">
+            <tr class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+              <td class="p-4 font-mono text-xs text-slate-500">{{ row.cciId ? 'CCI' + row.cciId : '—' }}</td>
+              <td class="p-4"><div class="font-bold text-slate-900 dark:text-white">{{ row.name }}</div><div class="text-[10px] text-slate-500 mt-1">Left {{ formatDate(row.leftAt) }} · Archived by {{ row.archivedBy }}</div></td>
+              <td class="p-4"><span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-xl text-xs font-semibold">{{ row.department || 'No department' }}</span></td>
+              <td class="p-4"><span class="font-semibold">{{ row.assets.length }}</span> item{{ row.assets.length === 1 ? '' : 's' }}</td>
+              <td class="p-4 text-right"><button type="button" (click)="openAssetInfo(row)" class="text-slate-500 hover:text-indigo-500 dark:text-slate-300 dark:hover:text-indigo-300 transition p-2" title="View asset details" [attr.aria-label]="'View asset details for ' + row.name"><i class="fa-solid fa-eye"></i></button></td>
+            </tr>
+          </ng-container>
+          <tr *ngIf="pageResult().total === 0 && !data.formerEmployeesError()"><td colspan="5" class="p-10 text-center text-slate-500"><i class="fa-solid fa-box-archive text-2xl block mb-2 opacity-40"></i>{{ search() ? 'No former employee records match your search.' : 'No former employees archived yet. Complete an Employee Equipment Offboarding checklist to add records here.' }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+      <div class="flex items-center gap-2"><span>Rows per page:</span><div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div><span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span></div>
+      <div class="flex items-center gap-2"><button type="button" (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-lg disabled:opacity-40">Previous</button><span class="font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span><button type="button" (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-lg disabled:opacity-40">Next</button></div>
+    </div>
+  </div>
+</div>

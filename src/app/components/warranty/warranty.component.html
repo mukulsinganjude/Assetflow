@@ -1,0 +1,146 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Warranty &amp; Predictive Replacement Forecasting</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Monitor lifecycles, warranty status, and upcoming replacement budgets.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button *ngIf="canImport" (click)="downloadTemplate()" class="glass-card hover:text-indigo-400 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-2 transition text-xs">
+        <i class="fa-solid fa-file-arrow-down"></i><span>Template</span>
+      </button>
+      <label *ngIf="canImport" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-2 transition text-xs shadow-lg cursor-pointer">
+        <i class="fa-solid fa-file-import"></i><span>Import Warranty</span>
+        <input type="file" accept=".xlsx,.xls,.csv" (change)="importWarranty($event)" class="hidden">
+      </label>
+      <button *ngIf="canExport" (click)="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-2 transition text-xs shadow-lg">
+        <i class="fa-solid fa-file-export"></i><span>Export</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="glass-card p-5 rounded-3xl flex items-center justify-between border-rose-500/30">
+      <div>
+        <p class="text-xs font-bold text-rose-400 uppercase tracking-wider">Due for Replacement (&lt; 1 Yr)</p>
+        <h4 class="text-2xl font-black text-rose-500 mt-1">{{ forecast().urgent }}</h4>
+      </div>
+      <div class="bg-rose-500/15 text-rose-400 p-3.5 rounded-2xl"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+    </div>
+    <div class="glass-card p-5 rounded-3xl flex items-center justify-between border-amber-500/30">
+      <div>
+        <p class="text-xs font-bold text-amber-400 uppercase tracking-wider">Mid-Lifecycle (1 - 3 Yrs)</p>
+        <h4 class="text-2xl font-black text-amber-500 mt-1">{{ forecast().mid }}</h4>
+      </div>
+      <div class="bg-amber-500/15 text-amber-400 p-3.5 rounded-2xl"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
+    </div>
+    <div class="glass-card p-5 rounded-3xl flex items-center justify-between border-emerald-500/30">
+      <div>
+        <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Healthy Lifespan (&gt; 3 Yrs)</p>
+        <h4 class="text-2xl font-black text-emerald-500 mt-1">{{ forecast().healthy }}</h4>
+      </div>
+      <div class="bg-emerald-500/15 text-emerald-400 p-3.5 rounded-2xl"><i class="fa-solid fa-shield-heart text-lg"></i></div>
+    </div>
+  </div>
+
+  <!-- 30/60/90-day expiry alerts. Only shown when something needs attention. -->
+  <div *ngIf="expiryAlerts().total > 0 || expiryAlerts().expired > 0" class="glass-card p-5 rounded-3xl border-amber-500/30">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="bg-amber-500/15 text-amber-400 w-9 h-9 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-bell"></i></div>
+        <div>
+          <h3 class="text-sm font-black text-slate-800 dark:text-white">Warranty Expiry Alerts</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Assets approaching or past their warranty end date.</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span *ngIf="expiryAlerts().expired > 0" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30">{{ expiryAlerts().expired }} expired</span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">{{ expiryAlerts().d30 }} in ≤30d</span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">{{ expiryAlerts().d60 }} in ≤60d</span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">{{ expiryAlerts().d90 }} in ≤90d</span>
+        <button (click)="reviewExpiring()" class="text-[11px] font-bold px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-md">Review in table</button>
+      </div>
+    </div>
+    <div class="max-h-56 overflow-y-auto divide-y divide-slate-200/40 dark:divide-white/5">
+      <div *ngFor="let item of expiringSoon()" class="flex items-center justify-between gap-3 py-2.5">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <i class="fa-solid shrink-0 text-slate-400" [ngClass]="categoryIcon(item.category)"></i>
+          <div class="min-w-0">
+            <p class="text-xs font-bold text-slate-800 dark:text-white truncate">{{ item.name }}</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              <span class="font-mono text-indigo-400">{{ item.serial }}</span>
+              · {{ item.assignedTo || 'Stock' }} · exp {{ item.warrantyDate }}
+            </p>
+          </div>
+        </div>
+        <span class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full"
+              [ngClass]="daysUntil(item)! <= 30 ? 'bg-rose-500/15 text-rose-400' : (daysUntil(item)! <= 60 ? 'bg-amber-500/15 text-amber-400' : 'bg-sky-500/15 text-sky-400')">
+          {{ daysUntil(item) }}d left
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="canSelect && selected().size > 0" class="glass-card bg-indigo-950/90 border-indigo-500/40 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-slide-up z-30 relative">
+    <div class="text-xs font-bold text-indigo-200">
+      <span class="bg-indigo-600 text-white px-2.5 py-1 rounded-xl mr-1.5">{{ selected().size }}</span> items selected
+    </div>
+    <button (click)="bulkExtend()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md">Extend Warranty (+1 Year)</button>
+  </div>
+
+  <div class="glass-card p-5 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 z-20 relative">
+    <div class="relative w-full md:w-80">
+      <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+      <input type="text" [ngModel]="search()" (ngModelChange)="search.set($event); onSearch()" placeholder="Search item, serial, or user..." class="glass-input w-full pl-11 pr-4 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white transition">
+    </div>
+    <div class="flex items-center space-x-3 w-full md:w-auto justify-between">
+      <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Filter Status:</label>
+      <div class="w-44"><app-custom-select [options]="statusOptions" [value]="statusFilter()" (valueChange)="statusFilter.set($event); onFilter()"></app-custom-select></div>
+    </div>
+  </div>
+
+  <div class="glass-card rounded-3xl relative z-10">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[700px]">
+        <thead>
+          <tr class="bg-white/30 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="p-4 w-10"><input *ngIf="canSelect" type="checkbox" (change)="toggleAll($any($event.target).checked)" class="rounded border-slate-700 text-indigo-600"></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 whitespace-nowrap" (click)="sort('name')">Item Name / Model <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 whitespace-nowrap" (click)="sort('serial')">Serial / Tag <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 whitespace-nowrap" (click)="sort('assignedTo')">Assigned To <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 whitespace-nowrap" (click)="sort('purchaseDate')">Purchase Date <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 whitespace-nowrap" (click)="sort('warrantyDate')">Warranty Expiry <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 text-center whitespace-nowrap cursor-pointer hover:text-indigo-400" (click)="sort('warrantyStatus')">Warranty Status <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <tr *ngIf="pageResult().sliced.length === 0"><td colspan="7" class="p-6 text-center text-slate-500 dark:text-slate-400">No warranty records found matching criteria.</td></tr>
+          <tr *ngFor="let item of pageResult().sliced" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+            <td class="p-4 w-10"><input *ngIf="canSelect" type="checkbox" [checked]="isSelected(item.id)" (change)="toggleRow(item.id, $any($event.target).checked)" class="rounded border-slate-700 text-indigo-600"></td>
+            <td class="p-4 font-bold text-slate-900 dark:text-white flex items-center"><i class="fa-solid mr-2" [ngClass]="categoryIcon(item.category)"></i> {{ item.name }}</td>
+            <td class="p-4 text-indigo-400 font-mono text-xs">{{ item.serial }}</td>
+            <td class="p-4"><span *ngIf="item.assignedTo">{{ item.assignedTo }}</span><span *ngIf="!item.assignedTo" class="text-slate-500 italic">Stock</span></td>
+            <td class="p-4 font-mono text-xs text-slate-600 dark:text-slate-400">{{ item.purchaseDate || 'N/A' }}</td>
+            <td class="p-4 font-mono text-xs text-slate-600 dark:text-slate-400">{{ item.warrantyDate || 'N/A' }}</td>
+            <td class="p-4 text-center">
+              <span *ngIf="isExpired(item)" class="inline-flex items-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">Expired</span>
+              <span *ngIf="!isExpired(item) && expiringSoonItem(item)" class="inline-flex items-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">Expiring · {{ daysUntil(item) }}d</span>
+              <span *ngIf="!isExpired(item) && !expiringSoonItem(item)" class="inline-flex items-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Active</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 relative z-20">
+      <div class="flex items-center space-x-2">
+        <span>Rows per page:</span>
+        <div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div>
+        <span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Previous</button>
+        <span class="px-2 font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span>
+        <button (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Next</button>
+      </div>
+    </div>
+  </div>
+</div>

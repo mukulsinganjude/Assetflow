@@ -1,0 +1,184 @@
+<div class="p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 animate-fade-in">
+
+  <!-- ============ NO ACTIVE SESSION: start a new stock-take ============ -->
+  <div *ngIf="!active()" class="glass-card rounded-3xl p-6 md:p-8">
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xl"><i class="fa-solid fa-clipboard-check"></i></div>
+      <div>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Physical Stock-Take</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Start an audit, then walk the office scanning QR codes to verify each asset is present.</p>
+      </div>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+      <div class="flex-1 space-y-1.5">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Session label <span class="text-slate-500 font-medium normal-case">(optional)</span></label>
+        <input [ngModel]="newLabel()" (ngModelChange)="newLabel.set($event)" maxlength="80" placeholder="e.g. Q3 HQ floor 2 audit" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+      </div>
+      <button (click)="start()" [disabled]="starting()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2.5 rounded-2xl font-semibold flex items-center justify-center gap-2 transition text-sm shadow-lg disabled:opacity-50">
+        <i class="fa-solid" [ngClass]="starting() ? 'fa-spinner fa-spin' : 'fa-play'"></i> Start Audit
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ ACTIVE SESSION ============ -->
+  <ng-container *ngIf="active() as s">
+    <!-- Progress header -->
+    <div class="glass-card rounded-3xl p-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">{{ s.label }}</h2>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Started {{ fmt(s.startedAt) }} by {{ s.startedBy }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button (click)="exportActive()" class="glass-card px-4 py-2 rounded-xl text-xs font-semibold hover:text-indigo-400 transition"><i class="fa-solid fa-file-arrow-down mr-1.5"></i>Export</button>
+          <button (click)="finish()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition"><i class="fa-solid fa-flag-checkered mr-1.5"></i>Finish Audit</button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
+        <span>{{ verifiedAssets().length }} / {{ data.assets().length }} verified present</span>
+        <span>{{ progressPct() }}%</span>
+      </div>
+      <div class="w-full h-3 rounded-full bg-slate-300/60 dark:bg-white/10 overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500" [style.width.%]="progressPct()"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-emerald-500">{{ verifiedAssets().length }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Verified</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-amber-500">{{ missingAssets().length }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Missing</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-sky-500">{{ misplacedScans().length }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Misplaced</div></div>
+        <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-rose-500">{{ unknownScans().length }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Unknown</div></div>
+      </div>
+    </div>
+    <!-- CHUNK-SCANNER -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Scanner + manual entry -->
+      <div class="glass-card rounded-3xl p-6 space-y-4">
+        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Scan Assets</h3>
+
+        <!-- "found with" context applied to each scan -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Found with <span class="text-slate-500 font-medium normal-case">(optional — person or location)</span></label>
+          <input [ngModel]="foundWith()" (ngModelChange)="foundWith.set($event)" maxlength="80" placeholder="e.g. Sarah Jenkins / Desk 14" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">If set and it differs from the recorded owner, the asset is flagged as misplaced.</p>
+        </div>
+
+        <!-- Camera -->
+        <div>
+          <div id="audit-reader" class="rounded-2xl overflow-hidden bg-slate-950/40 min-h-[80px]" [class.hidden]="!scanning()"></div>
+          <p *ngIf="cameraError()" class="text-xs text-rose-400 font-semibold mt-2">{{ cameraError() }}</p>
+          <button (click)="toggleCamera()" class="w-full mt-3 glass-card py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2" [class]="scanning() ? 'text-rose-500' : 'text-indigo-500 dark:text-indigo-400'">
+            <i class="fa-solid" [ngClass]="scanning() ? 'fa-stop' : 'fa-camera'"></i>
+            {{ scanning() ? 'Stop Camera' : 'Scan with Camera' }}
+          </button>
+        </div>
+
+        <!-- Manual fallback -->
+        <div class="pt-2 border-t border-slate-200/50 dark:border-white/10 space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Manual serial entry</label>
+          <div class="flex gap-2">
+            <input [ngModel]="manualSerial()" (ngModelChange)="manualSerial.set($event)" (keyup.enter)="submitManual()" maxlength="60" placeholder="Type or paste a serial…" class="glass-input flex-1 rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+            <button (click)="submitManual()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-2xl text-xs font-bold transition"><i class="fa-solid fa-check"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live reconciliation lists -->
+      <div class="glass-card rounded-3xl p-6 space-y-4 max-h-[520px] overflow-y-auto">
+        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Live Reconciliation</h3>
+
+        <div *ngIf="misplacedScans().length" class="space-y-1.5">
+          <p class="text-xs font-bold text-sky-500 uppercase"><i class="fa-solid fa-arrows-turn-to-dots mr-1"></i>Misplaced ({{ misplacedScans().length }})</p>
+          <div *ngFor="let sc of misplacedScans()" class="text-xs glass-card rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200">
+            <span class="font-semibold">{{ sc.assetName }}</span> · <span class="font-mono text-indigo-400">{{ sc.serial }}</span><br>
+            <span class="text-slate-500 dark:text-slate-400">expected {{ sc.expectedAssignee }}, found with {{ sc.foundWith }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="unknownScans().length" class="space-y-1.5">
+          <p class="text-xs font-bold text-rose-500 uppercase"><i class="fa-solid fa-circle-question mr-1"></i>Unrecognised serials ({{ unknownScans().length }})</p>
+          <div *ngFor="let sc of unknownScans()" class="text-xs glass-card rounded-xl px-3 py-2 flex items-center justify-between text-slate-700 dark:text-slate-200">
+            <span class="font-mono text-indigo-400">{{ sc.serial }}</span>
+            <button (click)="undoScan(sc)" class="text-slate-400 hover:text-rose-500 transition" title="Remove scan"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <p class="text-xs font-bold text-emerald-500 uppercase"><i class="fa-solid fa-circle-check mr-1"></i>Verified present ({{ verifiedAssets().length }})</p>
+          <p *ngIf="verifiedAssets().length === 0" class="text-xs text-slate-500 dark:text-slate-400">Nothing scanned yet.</p>
+          <div *ngFor="let a of verifiedAssets()" class="text-xs glass-card rounded-xl px-3 py-2 flex items-center justify-between text-slate-700 dark:text-slate-200">
+            <span><span class="font-semibold">{{ a.name }}</span> · <span class="font-mono text-indigo-400">{{ a.serial }}</span></span>
+            <i class="fa-solid fa-check text-emerald-500"></i>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <p class="text-xs font-bold text-amber-500 uppercase"><i class="fa-solid fa-magnifying-glass mr-1"></i>Still missing ({{ missingAssets().length }})</p>
+          <div *ngFor="let a of missingAssets()" class="text-xs glass-card rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200">
+            <span class="font-semibold">{{ a.name }}</span> · <span class="font-mono text-indigo-400">{{ a.serial }}</span>
+            <span class="text-slate-500 dark:text-slate-400"> · {{ a.assignedTo || 'Stock' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- CHUNK-SCANNER-END -->
+  </ng-container>
+  <!-- CHUNK-HISTORY -->
+  <div class="glass-card rounded-3xl">
+    <div class="p-6 border-b border-slate-200/50 dark:border-white/10">
+      <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Past Audits</h3>
+    </div>
+    <div class="divide-y divide-slate-200/40 dark:divide-white/5">
+      <p *ngIf="history().length === 0" class="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No completed audits yet.</p>
+      <div *ngFor="let h of history()" class="p-4 flex items-center justify-between gap-3 hover:bg-white/40 dark:hover:bg-white/5 transition">
+        <button (click)="openHistory(h)" class="flex-1 text-left min-w-0">
+          <div class="font-bold text-slate-900 dark:text-white truncate">{{ h.label }}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">{{ fmt(h.finishedAt) }} · by {{ h.startedBy }}</div>
+        </button>
+        <div class="flex items-center gap-3 shrink-0">
+          <span *ngIf="h.summary" class="text-xs font-bold text-emerald-500">{{ h.summary.verified }}/{{ h.summary.totalAssets }} ✓</span>
+          <span *ngIf="h.summary && h.summary.missing" class="text-xs font-bold text-amber-500">{{ h.summary.missing }} missing</span>
+          <button (click)="openHistory(h)" class="text-slate-400 hover:text-indigo-400 transition" title="View report"><i class="fa-solid fa-eye"></i></button>
+          <button (click)="removeSession(h)" class="text-slate-400 hover:text-rose-500 transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMPLETED-AUDIT REPORT MODAL ============ -->
+<div *ngIf="viewing() as v" (click)="closeHistory()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">
+  <div (click)="$event.stopPropagation()" class="glass-card max-w-lg w-full p-8 rounded-3xl shadow-2xl relative animate-slide-up space-y-5">
+    <button type="button" (click)="closeHistory()" class="absolute top-5 right-5 text-slate-400 hover:text-rose-400 transition" title="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-indigo-500/15 text-indigo-400 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-clipboard-check"></i></div>
+      <div>
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ v.label }}</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Finished {{ fmt(v.finishedAt) }} · by {{ v.startedBy }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="v.summary as sm" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-emerald-500">{{ sm.verified }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Verified</div></div>
+      <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-amber-500">{{ sm.missing }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Missing</div></div>
+      <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-sky-500">{{ sm.misplaced }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Misplaced</div></div>
+      <div class="glass-card rounded-2xl p-3 text-center"><div class="text-xl font-black text-rose-500">{{ sm.unknown }}</div><div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Unknown</div></div>
+    </div>
+
+    <div class="text-xs text-slate-500 dark:text-slate-400">
+      Total assets at finish: <span class="font-bold text-slate-700 dark:text-slate-200">{{ v.summary?.totalAssets ?? 0 }}</span> · Scans recorded: <span class="font-bold text-slate-700 dark:text-slate-200">{{ v.scans.length }}</span>
+    </div>
+
+    <div class="max-h-52 overflow-y-auto space-y-1.5">
+      <div *ngFor="let sc of v.scans" class="text-xs glass-card rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 flex items-center justify-between">
+        <span><span class="font-semibold">{{ sc.assetName || 'Unrecognised' }}</span> · <span class="font-mono text-indigo-400">{{ sc.serial }}</span></span>
+        <span class="text-slate-500 dark:text-slate-400">{{ sc.foundWith || '—' }}</span>
+      </div>
+    </div>
+
+    <div class="flex justify-end pt-1">
+      <button type="button" (click)="closeHistory()" class="glass-card px-5 py-2 rounded-xl text-xs font-semibold">Close</button>
+    </div>
+  </div>
+</div>

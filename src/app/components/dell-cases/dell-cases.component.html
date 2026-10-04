@@ -1,0 +1,75 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+  <div class="glass-card rounded-3xl">
+    <div class="p-6 border-b border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div><h1 class="text-xl font-black text-slate-800 dark:text-white"><i class="fa-solid fa-screwdriver-wrench text-indigo-400 mr-2"></i>Dell Case Register</h1><p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Track support cases and affected assets.</p></div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="downloadTemplate()" class="glass-card px-3 py-2.5 rounded-xl text-xs font-semibold"><i class="fa-solid fa-file-arrow-down mr-1"></i>Template</button>
+        <label *ngIf="canImport()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer"><i class="fa-solid fa-file-import mr-1"></i>Import<input type="file" accept=".xlsx,.xls,.csv" (change)="importExcel($event)" class="hidden"></label>
+        <button type="button" *ngIf="canExport()" (click)="exportExcel()" [disabled]="data.dellCases().length === 0" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md disabled:opacity-40 transition"><i class="fa-solid fa-file-arrow-down mr-1"></i>Export</button>
+        <button *ngIf="canAdd()" (click)="openAdd()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg"><i class="fa-solid fa-plus mr-1"></i> Register Dell case</button>
+      </div>
+    </div>
+    <div class="p-5 border-b border-slate-200/50 dark:border-white/10 flex flex-col lg:flex-row gap-3 lg:items-center">
+      <div class="relative w-full lg:max-w-md"><i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i><input [ngModel]="search()" (ngModelChange)="onSearch($event)" placeholder="Search employee, asset, case ID, or status" class="glass-input w-full rounded-xl pl-9 pr-3 py-2.5 text-sm dark:text-white"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full lg:w-auto lg:ml-auto"><app-custom-select class="min-w-[180px]" [options]="categoryFilterOptions" [value]="categoryFilter()" (valueChange)="setCategoryFilter($event)"></app-custom-select><app-custom-select class="min-w-[220px]" [options]="modelFilterOptions()" [value]="modelFilter()" [searchable]="true" searchPlaceholder="Search item models..." (valueChange)="setModelFilter($event)"></app-custom-select></div>
+    </div>
+    <p *ngIf="data.dellCasesError()" class="mx-5 mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500">{{ data.dellCasesError() }}</p>
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1200px] text-left border-collapse">
+        <thead><tr class="bg-white/30 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400"><th class="p-4 cursor-pointer" (click)="sort('caseId')">Case ID <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer" (click)="sort('employeeName')">Employee <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4">Category</th><th class="p-4 cursor-pointer" (click)="sort('assetModel')">Item model / name <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer" (click)="sort('assetSerial')">Serial no. <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer" (click)="sort('registeredDate')">Registered <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4">Issue</th><th class="p-4 cursor-pointer" (click)="sort('registeredBy')">Registered by <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 cursor-pointer" (click)="sort('status')">Status <i class="fa-solid fa-sort ml-1"></i></th><th class="p-4 text-right">Actions</th></tr></thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <tr *ngFor="let row of filtered()" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+            <td class="p-4 font-mono font-bold text-indigo-500">{{ row.caseId }}</td><td class="p-4 font-semibold">{{ row.employeeName }}</td><td class="p-4">{{ row.category || categoryForModel(row.assetModel) || '—' }}</td><td class="p-4">{{ row.assetModel }}</td><td class="p-4 font-mono text-xs">{{ row.assetSerial }}</td><td class="p-4 text-xs text-slate-500">{{ date(row.registeredDate) }}</td><td class="p-4 max-w-[260px] whitespace-pre-wrap break-words text-xs">{{ row.issueDescription }}</td><td class="p-4 text-xs text-slate-500">{{ row.registeredBy }}</td><td class="p-4"><span class="px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap" [ngClass]="statusClass(row.status)">{{ row.status }}</span></td>
+            <td class="p-4 text-right whitespace-nowrap"><button type="button" *ngIf="canComment()" (click)="openComments(row)" class="text-slate-400 hover:text-indigo-400 transition mr-3 relative" title="Comments"><i class="fa-solid fa-comment"></i><span *ngIf="row.comments?.length" class="absolute -top-2 -right-2 bg-indigo-600 text-white text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-full">{{ row.comments?.length }}</span></button><button *ngIf="canEdit()" (click)="edit(row)" class="text-slate-400 hover:text-indigo-400 mr-3" title="Edit case"><i class="fa-solid fa-pen-to-square"></i></button><button *ngIf="canDelete()" (click)="remove(row)" class="text-slate-400 hover:text-rose-400" title="Delete case"><i class="fa-solid fa-trash-can"></i></button></td>
+          </tr>
+          <tr *ngIf="filtered().length === 0 && !data.dellCasesError()"><td colspan="10" class="p-10 text-center text-slate-500"><i class="fa-solid fa-screwdriver-wrench text-2xl block mb-2 opacity-40"></i>{{ search() || categoryFilter() || modelFilter() ? 'No Dell cases match the current filters.' : 'No Dell support cases registered yet.' }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+      <div class="flex items-center gap-2"><span>Rows per page:</span><div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div><span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span></div>
+      <div class="flex items-center gap-2"><button type="button" (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-lg disabled:opacity-40">Previous</button><span class="font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span><button type="button" (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-lg disabled:opacity-40">Next</button></div>
+    </div>
+  </div>
+</div>
+
+<app-comments-modal [dellCaseId]="commentsCaseId()" (closed)="closeComments()"></app-comments-modal>
+
+<div *ngIf="formOpen()" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+  <div class="glass-card w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl p-6 md:p-8 shadow-2xl">
+    <div class="flex justify-between items-start mb-5"><div><h2 class="text-lg font-black text-slate-900 dark:text-white">{{ editingId() == null ? 'Register Dell case' : 'Edit Dell case' }}</h2><p class="text-xs text-slate-500 mt-1">Record the affected employee, equipment, issue, and case outcome.</p></div><button type="button" (click)="close()" class="text-slate-400 hover:text-rose-400" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+    <form (submit)="save($event)" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Employee name
+          <app-custom-select class="block w-full mt-1 normal-case" [options]="employeeOptions()" [value]="employeeName" [searchable]="true" searchPlaceholder="Search employees..." (valueChange)="setEmployeeName($event)"></app-custom-select>
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Category <span class="text-rose-500">*</span>
+          <app-custom-select class="block w-full mt-1 normal-case" [options]="categoryOptions" [value]="category" (valueChange)="setCategory($event)"></app-custom-select>
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Item model / name <span class="text-rose-500">*</span>
+          <app-custom-select class="block w-full mt-1 normal-case" [options]="caseModelOptions()" [value]="assetModel" (valueChange)="assetModel = $event"></app-custom-select>
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Asset serial no.
+          <input [(ngModel)]="assetSerial" name="assetSerial" required list="dellCaseSerials" maxlength="100" placeholder="Serial number" class="glass-input w-full mt-1 rounded-xl px-3 py-2.5 text-sm normal-case dark:text-white"><datalist id="dellCaseSerials"><option *ngFor="let serial of assetSerials()" [value]="serial"></datalist>
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Case registered date
+          <input [(ngModel)]="registeredDate" name="registeredDate" required type="date" class="glass-input w-full mt-1 rounded-xl px-3 py-2.5 text-sm normal-case dark:text-white">
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Case ID
+          <input [(ngModel)]="caseId" name="caseId" required maxlength="80" placeholder="Dell case ID" class="glass-input w-full mt-1 rounded-xl px-3 py-2.5 text-sm normal-case dark:text-white">
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Registered by
+          <input [(ngModel)]="registeredBy" name="registeredBy" required maxlength="100" placeholder="Person who registered the case" class="glass-input w-full mt-1 rounded-xl px-3 py-2.5 text-sm normal-case dark:text-white">
+        </label>
+        <label class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 sm:col-span-2">Issue description / comment
+          <div class="flex items-end gap-2 mt-1"><textarea [(ngModel)]="issueDescription" name="issueDescription" required rows="3" maxlength="1000" placeholder="Describe the issue" class="glass-input flex-1 rounded-xl px-3 py-2.5 text-sm normal-case dark:text-white resize-y"></textarea><app-emoji-picker [text]="issueDescription" (textChange)="issueDescription = $event"></app-emoji-picker></div>
+        </label>
+        <div class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Case status
+          <app-custom-select class="block w-full mt-1 normal-case" [options]="statusOptions" [value]="status" [dropUp]="true" (valueChange)="status = $event"></app-custom-select>
+        </div>
+      </div>
+      <p *ngIf="error()" class="text-xs font-semibold text-rose-500">{{ error() }}</p>
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-200/50 dark:border-white/10"><button type="button" (click)="close()" [disabled]="saving()" class="glass-card px-4 py-2 rounded-xl text-xs font-semibold">Cancel</button><button type="submit" [disabled]="saving()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold disabled:opacity-50"><i class="fa-solid" [ngClass]="saving() ? 'fa-spinner fa-spin' : 'fa-check'"></i> Save case</button></div>
+    </form>
+  </div>
+</div>

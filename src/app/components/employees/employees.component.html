@@ -1,0 +1,118 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+  <div class="glass-card rounded-3xl">
+    <div class="p-6 border-b border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Employee Asset Breakdown</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Complete overview of hardware equipment assigned to staff members.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1 rounded-xl border border-slate-200/60 dark:border-white/10 p-1" role="group" aria-label="Employee asset row density">
+          <button type="button" (click)="setDensity('compact')" [attr.aria-pressed]="density() === 'compact'" [ngClass]="density() === 'compact' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'" class="px-2.5 py-2 rounded-lg text-[11px] font-semibold transition whitespace-nowrap"><i class="fa-solid fa-bars-staggered mr-1" aria-hidden="true"></i>Compact</button>
+          <button type="button" (click)="setDensity('detailed')" [attr.aria-pressed]="density() === 'detailed'" [ngClass]="density() === 'detailed' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'" class="px-2.5 py-2 rounded-lg text-[11px] font-semibold transition whitespace-nowrap"><i class="fa-solid fa-list mr-1" aria-hidden="true"></i>Detailed</button>
+        </div>
+        <button (click)="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center justify-center space-x-2 transition text-xs shadow-lg">
+          <i class="fa-solid fa-file-arrow-down"></i><span>Export</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="p-5 border-b border-slate-200/50 dark:border-white/10 flex flex-col lg:flex-row items-center justify-between gap-4 relative z-20">
+      <div class="relative w-full lg:w-96">
+        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <input type="text" [ngModel]="search()" (ngModelChange)="onSearch($event)"
+          placeholder="Search employee, serial or model..."
+          class="glass-input w-full pl-11 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white transition">
+        <button *ngIf="search()" (click)="clearSearch()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-400 transition text-xs" title="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-3 w-full lg:w-auto justify-start lg:justify-end">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Category:</label>
+          <div class="w-40"><app-custom-select [options]="catOptions" [value]="catFilter()" (valueChange)="onCat($event)"></app-custom-select></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Dept:</label>
+          <div class="w-40"><app-custom-select [options]="deptOptions()" [value]="deptFilter()" (valueChange)="onDept($event)"></app-custom-select></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Status:</label>
+          <div class="w-40"><app-custom-select [options]="statusOptions" [value]="statusFilter()" (valueChange)="onStatus($event)"></app-custom-select></div>
+        </div>
+        <button *ngIf="hasActiveFilters()" (click)="clearFilters()" class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-400 transition flex items-center gap-1.5" title="Clear all filters">
+          <i class="fa-solid fa-filter-circle-xmark"></i><span>Clear</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="max-h-[65vh] overflow-auto overscroll-contain" role="region" aria-label="Employee asset breakdown table" tabindex="0">
+      <table class="w-full text-left border-collapse" [ngClass]="density() === 'compact' ? 'min-w-[900px]' : 'min-w-[980px]'">
+        <thead class="sticky top-0 z-10">
+          <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200/70 dark:border-white/10 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('name')">Employee Name <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('department')">Department <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4"><i class="fa-solid fa-laptop text-blue-400 mr-1"></i> Laptop</th>
+            <th class="p-4"><i class="fa-solid fa-plug text-emerald-400 mr-1"></i> Laptop Charger</th>
+            <th class="p-4"><i class="fa-solid fa-desktop text-indigo-400 mr-1"></i> Monitor</th>
+            <th class="p-4"><i class="fa-solid fa-computer-mouse text-emerald-400 mr-1"></i> Mouse</th>
+            <th class="p-4"><i class="fa-solid fa-plug text-amber-400 mr-1"></i> Docking Station</th>
+            <th class="p-4"><i class="fa-solid fa-headset text-purple-400 mr-1"></i> Headset</th>
+            <th class="p-4 text-center"><span class="inline-flex items-center justify-center gap-1.5"><i class="fa-solid fa-bolt text-slate-400"></i> Action</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <tr *ngIf="rows().length === 0"><td colspan="9" class="p-6 text-center text-slate-500 dark:text-slate-400">{{ hasActiveFilters() ? 'No employees match your filters.' : 'No employees assigned equipment.' }}</td></tr>
+          <tr *ngFor="let r of rows()" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'" class="font-bold text-slate-900 dark:text-white"><a [routerLink]="['/employees', r.name]" class="hover:text-indigo-400 transition">{{ r.name }}</a></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-xl text-xs font-bold">{{ r.department }}</span></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><ng-container *ngTemplateOutlet="cell; context: { $implicit: r.laptop }"></ng-container></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'">
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
+                [ngClass]="r.chargerIncluded ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500 dark:text-slate-400'">
+                <i class="fa-solid" [ngClass]="r.chargerIncluded ? 'fa-circle-check' : 'fa-minus'"></i>
+                {{ r.chargerIncluded ? 'Yes' : 'No' }}
+              </span>
+            </td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><ng-container *ngTemplateOutlet="cell; context: { $implicit: r.monitor }"></ng-container></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><ng-container *ngTemplateOutlet="cell; context: { $implicit: r.mouse }"></ng-container></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><ng-container *ngTemplateOutlet="cell; context: { $implicit: r.dock }"></ng-container></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'"><ng-container *ngTemplateOutlet="cell; context: { $implicit: r.headset }"></ng-container></td>
+            <td [ngClass]="density() === 'compact' ? 'px-3 py-2' : 'p-4'" class="text-center">
+              <button (click)="openComments(r.name)" class="text-slate-400 hover:text-indigo-400 transition" title="Employee notes">
+                <i class="fa-solid fa-comment text-base"></i>
+                <span *ngIf="commentCount(r.name)" class="ml-1 font-bold text-indigo-400">{{ commentCount(r.name) }}</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 relative z-20">
+      <div class="flex items-center space-x-2">
+        <span>Rows per page:</span>
+        <div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div>
+        <span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Previous</button>
+        <span class="px-2 font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span>
+        <button (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #cell let-item>
+  <ng-container *ngIf="item; else na">
+    <div class="font-bold text-slate-900 dark:text-white">{{ item.name }}</div>
+    <div *ngIf="density() === 'detailed'" class="flex items-center gap-2">
+      <span class="text-xs text-indigo-400 font-mono">{{ item.serial }}</span>
+      <span class="text-[10px] text-slate-400 dark:text-slate-500">({{ item.assignmentType || 'Primary' }})</span>
+    </div>
+  </ng-container>
+  <ng-template #na><span class="text-slate-500 dark:text-slate-400 font-mono text-xs font-bold px-2 py-1 rounded">NA</span></ng-template>
+</ng-template>
+
+<!-- COMMENTS MODAL (per-employee) -->
+<app-comments-modal [employeeName]="commentsName()" (closed)="closeComments()"></app-comments-modal>

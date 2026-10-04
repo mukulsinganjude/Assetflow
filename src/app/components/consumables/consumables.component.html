@@ -1,0 +1,187 @@
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 animate-fade-in">
+  <!-- KPI STRIP -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="glass-card rounded-3xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Lines</p>
+        <p class="text-2xl font-black text-slate-900 dark:text-white">{{ data.consumables().length }}</p>
+      </div>
+    </div>
+    <div class="glass-card rounded-3xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-xl"><i class="fa-solid fa-cubes"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Units</p>
+        <p class="text-2xl font-black text-slate-900 dark:text-white">{{ totalUnits() }}</p>
+      </div>
+    </div>
+    <button (click)="toggleLowOnly()" [class]="lowOnly() ? 'ring-2 ring-amber-400' : ''" class="glass-card rounded-3xl p-5 flex items-center gap-4 text-left transition">
+      <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Low / Out of Stock</p>
+        <p class="text-2xl font-black" [class]="lowStockCount() ? 'text-amber-500' : 'text-slate-900 dark:text-white'">{{ lowStockCount() }}</p>
+      </div>
+    </button>
+  </div>
+
+  <div class="glass-card rounded-3xl">
+    <div class="p-6 border-b border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Consumables Inventory</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Quantity-based stock with reorder thresholds — separate from serial-tracked hardware.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button *ngIf="canImport()" type="button" (click)="downloadTemplate()" class="glass-card px-3 py-2.5 rounded-2xl font-semibold text-xs"><i class="fa-solid fa-file-arrow-down mr-1"></i>Template</button>
+        <label *ngIf="canImport()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2.5 rounded-2xl font-semibold text-xs cursor-pointer"><i class="fa-solid fa-file-import mr-1"></i>Import<input type="file" accept=".xlsx,.xls,.csv" (change)="importExcel($event)" class="hidden"></label>
+        <button *ngIf="canExport()" (click)="exportExcel()" [disabled]="pageResult().total === 0" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center justify-center space-x-2 transition text-xs shadow-lg disabled:opacity-40">
+          <i class="fa-solid fa-file-arrow-down"></i><span>Export</span>
+        </button>
+        <button *ngIf="canAdd()" (click)="openAdd()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center justify-center space-x-2 transition text-xs shadow-lg">
+          <i class="fa-solid fa-plus"></i><span>Add Item</span>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="data.consumablesError()" class="mx-5 mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500 flex items-center justify-between gap-3" role="alert"><span><i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ data.consumablesError() }}</span><button type="button" (click)="data.loadConsumables()" [disabled]="data.consumablesLoading()" class="font-bold underline shrink-0">Try again</button></div>
+
+    <!-- FILTER BAR -->
+    <div class="p-5 border-b border-slate-200/50 dark:border-white/10 flex flex-col lg:flex-row items-center justify-between gap-4 relative z-20">
+      <div class="relative w-full lg:w-96">
+        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <input type="text" [ngModel]="search()" (ngModelChange)="onSearch($event)" maxlength="80"
+          placeholder="Search item or location..."
+          class="glass-input w-full pl-11 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white transition">
+        <button *ngIf="search()" (click)="clearSearch()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-400 transition text-xs" title="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-3 w-full lg:w-auto justify-start lg:justify-end">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Category:</label>
+          <div class="w-44"><app-custom-select [options]="catOptions" [value]="catFilter()" (valueChange)="onCat($event)"></app-custom-select></div>
+        </div>
+        <button *ngIf="hasActiveFilters()" (click)="clearFilters()" class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-400 transition flex items-center gap-1.5" title="Clear all filters">
+          <i class="fa-solid fa-filter-circle-xmark"></i><span>Clear</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[860px]">
+        <thead>
+          <tr class="bg-white/30 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('name')">Item <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('category')">Category <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('location')">Location <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 text-center cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('reorderThreshold')">Reorder At <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 text-center cursor-pointer hover:text-indigo-400 transition select-none whitespace-nowrap" (click)="sort('quantity')">Quantity <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+            <th class="p-4 text-center">Adjust</th>
+            <th class="p-4 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200/40 dark:divide-white/5 text-sm">
+          <tr *ngIf="pageResult().sliced.length === 0 && data.consumablesLoading()"><td colspan="7" class="p-6 text-center text-slate-500 dark:text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading consumables inventory…</td></tr>
+          <tr *ngIf="pageResult().sliced.length === 0 && !data.consumablesLoading() && !data.consumablesError()"><td colspan="7" class="p-6 text-center text-slate-500 dark:text-slate-400">{{ hasActiveFilters() ? 'No items match your filters.' : 'No consumables tracked yet. Click “Add Item” to start.' }}</td></tr>
+          <tr *ngFor="let c of pageResult().sliced" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
+            <td class="p-4">
+              <div class="font-bold text-slate-900 dark:text-white">{{ c.name }}</div>
+              <div *ngIf="c.notes" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ c.notes }}</div>
+            </td>
+            <td class="p-4"><span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-xl text-xs font-bold">{{ c.category }}</span></td>
+            <td class="p-4 text-slate-600 dark:text-slate-300">{{ c.location || '—' }}</td>
+            <td class="p-4 text-center text-slate-500 dark:text-slate-400 font-mono">{{ c.reorderThreshold }}</td>
+            <td class="p-4 text-center">
+              <span class="font-black text-base" [class]="isOut(c) ? 'text-rose-500' : isLow(c) ? 'text-amber-500' : 'text-slate-900 dark:text-white'">{{ c.quantity }}</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400 ml-1">{{ c.unit }}</span>
+              <div *ngIf="isOut(c)" class="text-[10px] font-bold text-rose-500 uppercase mt-0.5">Out of stock</div>
+              <div *ngIf="!isOut(c) && isLow(c)" class="text-[10px] font-bold text-amber-500 uppercase mt-0.5">Low stock</div>
+            </td>
+            <td class="p-4 text-center">
+              <div class="inline-flex items-center gap-1.5">
+                <button *ngIf="canAdjust()" (click)="adjust(c, -1)" [disabled]="c.quantity === 0" class="w-8 h-8 rounded-xl glass-card text-slate-600 dark:text-slate-300 hover:text-rose-500 disabled:opacity-30 transition" title="Remove one"><i class="fa-solid fa-minus text-xs"></i></button>
+                <button *ngIf="canAdjust()" (click)="adjust(c, 1)" class="w-8 h-8 rounded-xl glass-card text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition" title="Add one"><i class="fa-solid fa-plus text-xs"></i></button>
+              </div>
+            </td>
+            <td class="p-4 text-center">
+              <div class="inline-flex items-center gap-3">
+                <button *ngIf="canEdit()" (click)="openEdit(c)" class="text-slate-400 hover:text-indigo-400 transition" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button *ngIf="canDelete()" (click)="remove(c)" class="text-slate-400 hover:text-rose-500 transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER / PAGINATION -->
+    <div class="p-4 border-t border-slate-200/50 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 relative z-20">
+      <div class="flex items-center space-x-2">
+        <span>Rows per page:</span>
+        <div class="w-24"><app-custom-select [options]="sizeOptions" [value]="size() === Infinity ? 'All' : size().toString()" [dropUp]="true" (valueChange)="changeSize($event)"></app-custom-select></div>
+        <span class="ml-2 font-medium">{{ pageInfo(pageResult()) }}</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button (click)="changePage(-1)" [disabled]="pageResult().page <= 1" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Previous</button>
+        <span class="px-2 font-bold text-slate-800 dark:text-slate-200">{{ pageResult().page }}</span>
+        <button (click)="changePage(1)" [disabled]="pageResult().page >= pageResult().maxPage" class="glass-card px-3 py-1.5 rounded-xl hover:text-indigo-400 disabled:opacity-40">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div *ngIf="modalOpen()" (click)="closeModal()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">
+  <div (click)="$event.stopPropagation()" class="glass-card max-w-lg w-full p-8 rounded-3xl shadow-2xl relative animate-slide-up space-y-5">
+    <button type="button" (click)="closeModal()" class="absolute top-5 right-5 text-slate-400 hover:text-rose-400 transition" title="Close"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-indigo-500/15 text-indigo-400 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ editingId() == null ? 'Add Consumable' : 'Edit Consumable' }}</h3>
+    </div>
+
+    <div class="space-y-4">
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Item Name</label>
+        <input [ngModel]="draft().name" (ngModelChange)="patch('name', $event)" maxlength="120" placeholder="e.g. USB-C to HDMI Adapter" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Category</label>
+          <app-custom-select [options]="formCatOptions" [value]="draft().category || 'Cables'" (valueChange)="patch('category', $event)"></app-custom-select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Unit</label>
+          <app-custom-select [options]="unitOptions" [value]="draft().unit || 'pcs'" (valueChange)="patch('unit', $event)"></app-custom-select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Quantity</label>
+          <input type="number" min="0" max="1000000" step="1" [ngModel]="draft().quantity" (ngModelChange)="patch('quantity', $event)" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Reorder At</label>
+          <input type="number" min="0" max="1000000" step="1" [ngModel]="draft().reorderThreshold" (ngModelChange)="patch('reorderThreshold', $event)" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Location <span class="text-slate-500 font-medium normal-case">(optional)</span></label>
+        <input [ngModel]="draft().location" (ngModelChange)="patch('location', $event)" maxlength="80" placeholder="e.g. IT Store Room A" class="glass-input w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Notes <span class="text-slate-500 font-medium normal-case">(optional)</span></label>
+        <div class="flex items-end gap-2"><textarea [ngModel]="draft().notes" (ngModelChange)="patch('notes', $event)" rows="2" maxlength="300" class="glass-input flex-1 rounded-2xl px-4 py-2.5 text-sm focus:outline-none dark:text-white resize-none"></textarea><app-emoji-picker [text]="draft().notes || ''" (textChange)="patch('notes', $event)"></app-emoji-picker></div>
+      </div>
+    </div>
+
+    <p *ngIf="formError()" class="text-xs text-rose-400 font-semibold">{{ formError() }}</p>
+
+    <div class="flex items-center justify-end gap-2 pt-1">
+      <button type="button" (click)="closeModal()" [disabled]="saving()" class="glass-card px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-40">Cancel</button>
+      <button type="button" (click)="save()" [disabled]="saving()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-lg disabled:opacity-50">
+        <i class="fa-solid" [ngClass]="saving() ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+        {{ editingId() == null ? 'Add Item' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>

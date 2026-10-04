@@ -1,0 +1,13 @@
+/dist
+/node_modules
+/.angular
+*.log
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+server/.jwt-secret
+server/data.json
+server/data.json.corrupt-*.json

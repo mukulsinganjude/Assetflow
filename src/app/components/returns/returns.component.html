@@ -1,0 +1,98 @@
+<div class="p-6 md:p-8 max-w-5xl mx-auto w-full space-y-6 animate-fade-in">
+  <div class="glass-card p-6 md:p-8 rounded-3xl">
+    <div class="mb-6">
+      <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Employee Equipment Offboarding</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Track every asset return, confirm laptop accessories, and resume outstanding items any time.</p>
+    </div>
+    <div class="relative">
+      <label for="offboarding-employee-search" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Search and select employees</label>
+      <div class="relative">
+        <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+        <input id="offboarding-employee-search" type="text" [ngModel]="search()" (ngModelChange)="search.set($event); error.set('')" placeholder="Type a name or CCIID, then select employees..." class="glass-input w-full pl-11 pr-4 py-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white transition">
+      </div>
+      <div *ngIf="showEmployeeOptions()" class="custom-select-menu !block !relative !top-auto !left-auto !right-auto mt-2 max-h-56 overflow-y-auto rounded-2xl">
+        <button *ngFor="let employee of matchedEmployees()" type="button" (click)="toggleEmployee(employee.name)" class="custom-select-option w-full text-left" [class.selected]="isSelected(employee.name)" [attr.aria-pressed]="isSelected(employee.name)">
+          <span class="flex flex-col items-start gap-0.5">
+            <span>{{ employee.name }}</span>
+            <span class="text-[11px] font-medium opacity-70">({{ employee.cciId ? 'CCI' + employee.cciId : 'CCIID not set' }})</span>
+          </span>
+          <i class="fa-solid" [ngClass]="isSelected(employee.name) ? 'fa-square-check' : 'fa-square'" aria-hidden="true"></i>
+        </button>
+        <p *ngIf="!matchedEmployees().length" class="px-3 py-2 text-xs text-slate-500">No employees found.</p>
+      </div>
+      <div *ngIf="selectedEmployees().length" class="flex flex-wrap gap-2 mt-3" aria-label="Selected employees">
+        <span *ngFor="let name of selectedEmployees()" class="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-200 px-3 py-1.5 text-xs font-semibold">
+          {{ name }}
+          <button type="button" (click)="removeEmployee(name)" class="hover:text-rose-500" [attr.aria-label]="'Remove ' + name"><i class="fa-solid fa-xmark"></i></button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <section *ngFor="let employeeName of selectedEmployees()" class="glass-card p-6 md:p-8 rounded-3xl space-y-5">
+    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-200/50 dark:border-white/10 pb-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white">Offboarding: {{ employeeName }}</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ employeeCciIdLabel(employeeName) }}</p>
+      </div>
+      <button *ngIf="isChecklistOpen(employeeName)" type="button" (click)="backToOffboarding()" class="glass-card px-4 py-2.5 rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-arrow-left mr-1.5"></i>Back to offboarding
+      </button>
+      <button *ngIf="!isChecklistOpen(employeeName) && activeChecklistFor(employeeName)" type="button" (click)="openChecklist(employeeName)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-list-check mr-1.5"></i>Continue checklist · {{ outstandingCount(activeChecklistFor(employeeName)) }} outstanding
+      </button>
+      <button *ngIf="!isChecklistOpen(employeeName) && !activeChecklistFor(employeeName) && assignedCountFor(employeeName) > 0 && auth.can('offboarding.start')" type="button" (click)="startChecklist(employeeName)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-list-check mr-1.5"></i>{{ checklistFor(employeeName) ? 'Start new checklist' : 'Start offboarding checklist' }} · {{ assignedCountFor(employeeName) }} outstanding
+      </button>
+    </div>
+
+    <p *ngIf="!checklistFor(employeeName) && assignedCountFor(employeeName) === 0" class="text-sm text-slate-500 dark:text-slate-400">This employee currently has no assigned assets.</p>
+
+    <ng-container *ngIf="isChecklistOpen(employeeName) && checklistFor(employeeName) as current">
+      <p class="text-xs text-slate-500 dark:text-slate-400">Started {{ current.startedAt | date:'medium' }} · by {{ current.startedBy }}</p>
+      <div class="flex flex-wrap gap-2 text-xs font-semibold">
+        <span class="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5">{{ returnedCount(current) }} returned</span>
+        <span class="rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 px-3 py-1.5">{{ outstandingCount(current) }} outstanding</span>
+        <span *ngIf="current.completedAt" class="rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-3 py-1.5">Completed {{ current.completedAt | date:'medium' }}</span>
+      </div>
+
+      <div class="space-y-3">
+        <article *ngFor="let item of current.items" class="offboarding-return-item glass-card rounded-2xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="font-bold text-sm text-slate-900 dark:text-white block">{{ item.name }}</span>
+              <span class="text-xs text-indigo-500 dark:text-indigo-400 font-mono">{{ item.serial }} · {{ item.category }}</span>
+              <p *ngIf="item.returnedAt" class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">Returned {{ item.returnedAt | date:'medium' }} by {{ item.returnedBy }}</p>
+              <p *ngIf="item.returnedAt && item.returnedCondition" class="text-[11px] font-semibold mt-1" [ngClass]="item.returnedCondition === 'Good' ? 'text-emerald-600 dark:text-emerald-400' : item.returnedCondition === 'Damaged' ? 'text-rose-600 dark:text-rose-400' : 'text-orange-600 dark:text-orange-400'">Condition: {{ item.returnedCondition }}</p>
+            </div>
+            <span [ngClass]="item.returnedAt ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'" class="px-3 py-1.5 rounded-full text-[10px] font-bold">{{ item.returnedAt ? 'Returned' : 'Outstanding' }}</span>
+          </div>
+
+          <div *ngIf="!item.returnedAt && item.category === 'Laptop'" class="border-t border-slate-200/50 dark:border-white/10 pt-3">
+            <p class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">Accessories received with laptop</p>
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+              <label *ngFor="let field of accessoryFields" class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                <input type="checkbox" [checked]="checklistAccessories(item.assetId)[field.key]" (change)="setAccessory(item.assetId, field.key, $any($event.target).checked)" class="rounded border-slate-400 text-indigo-600 focus:ring-indigo-500">
+                {{ field.label }}
+              </label>
+            </div>
+          </div>
+
+          <div *ngIf="!item.returnedAt" class="flex flex-wrap items-center gap-3 border-t border-slate-200/50 dark:border-white/10 pt-3">
+            <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400" [for]="'condition-' + item.assetId">Condition on return</label>
+            <div class="w-40"><app-custom-select [options]="conditionOptions" [value]="itemCondition(item.assetId)" (valueChange)="setCondition(item.assetId, $event)"></app-custom-select></div>
+          </div>
+
+          <div *ngIf="!item.returnedAt && auth.can('offboarding.return')" class="flex justify-end">
+            <button type="button" (click)="markReturned(employeeName, item)" [disabled]="busyItem() != null" class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+              <i class="fa-solid mr-1.5" [ngClass]="busyItem() === item.assetId ? 'fa-spinner fa-spin' : 'fa-check'"></i>Mark returned
+            </button>
+          </div>
+        </article>
+      </div>
+      <p *ngIf="current.completedAt" class="text-sm text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1.5"></i>Offboarding complete. {{ employeeName }} was moved to Former Employees with the recorded asset return conditions.</p>
+    </ng-container>
+  </section>
+
+  <p *ngIf="error()" role="alert" class="text-xs text-rose-500 font-semibold">{{ error() }}</p>
+</div>
