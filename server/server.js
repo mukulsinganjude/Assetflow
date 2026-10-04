@@ -35,6 +35,8 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const presenceSessions = new Map();
+const PRESENCE_TIMEOUT_MS = 75_000;
 const ASSET_CONDITIONS = ['Good', 'Damaged', 'Needs repair'];
 const STOCK = store.STOCK_LABEL;
 const isStock = value => !String(value || '').trim() || ['stock', 'unassigned'].includes(String(value).trim().toLowerCase());
@@ -223,6 +225,46 @@ app.use('/api', (req, res, next) => {
   req.user.displayName = user.displayName || '';
   req.user.permissions = Array.isArray(user.permissions) ? user.permissions : null;
   next();
+});
+
+// Live presence is deliberately transient: a browser session must refresh its
+// heartbeat, and stale sessions disappear automatically without touching app data.
+const cleanPresenceSessions = () => {
+  const cutoff = Date.now() - PRESENCE_TIMEOUT_MS;
+  for (const [sessionId, session] of presenceSessions) {
+    if (session.lastSeen < cutoff) presenceSessions.delete(sessionId);
+  }
+};
+app.post('/api/presence/heartbeat', (req, res) => {
+  const sessionId = clean(req.body.sessionId, 64);
+  if (!/^[a-zA-Z0-9-]{16,64}$/.test(sessionId)) return res.status(400).json({ error: 'A valid browser session is required.' });
+  presenceSessions.set(sessionId, { username: req.user.username, lastSeen: Date.now() });
+  cleanPresenceSessions();
+  res.json({ ok: true });
+});
+app.post('/api/presence/offline', (req, res) => {
+  const sessionId = clean(req.body.sessionId, 64);
+  const session = presenceSessions.get(sessionId);
+  if (session?.username.toLowerCase() === req.user.username.toLowerCase()) presenceSessions.delete(sessionId);
+  res.json({ ok: true });
+});
+app.get('/api/presence', (req, res) => {
+  cleanPresenceSessions();
+  const latestByUser = new Map();
+  for (const session of presenceSessions.values()) {
+    const key = session.username.toLowerCase();
+    const previous = latestByUser.get(key);
+    if (!previous || session.lastSeen > previous.lastSeen) latestByUser.set(key, session);
+  }
+  const online = [...latestByUser.values()].map(session => {
+    const user = findUser(session.username);
+    return user ? {
+      displayName: user.displayName || user.username,
+      title: user.title || '',
+      lastSeen: new Date(session.lastSeen).toISOString()
+    } : null;
+  }).filter(Boolean).sort((a, b) => a.displayName.localeCompare(b.displayName));
+  res.json(online);
 });
 
 const PERMISSION_GROUPS = {

@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, HostListener, signal, ViewChild } from '@angular/core';
+import { Component, computed, ElementRef, effect, HostListener, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { DataService } from './services/data.service';
 import { UiService } from './services/ui.service';
+import { PresenceService } from './services/presence.service';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { Asset, HistoryEntry } from './models/models';
 
@@ -254,6 +255,7 @@ export class AppComponent {
   profileOpen = false;
   profileMenuOpen = false;
   notificationsOpen = false;
+  presenceOpen = false;
   notificationReadIds = signal<Set<string>>(new Set());
   notificationDismissedIds = signal<Set<string>>(new Set());
   /** Every notable asset-history event, newest first (before dismissals are applied). */
@@ -313,8 +315,12 @@ export class AppComponent {
     public theme: ThemeService,
     public data: DataService,
     public ui: UiService,
+    public presence: PresenceService,
     private router: Router
-  ) { this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder(); this.loadSidebarMode(); }
+  ) {
+    this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder(); this.loadSidebarMode();
+    effect(() => this.auth.isLoggedIn() ? this.presence.start() : this.presence.stop());
+  }
 
   visibleSidebarItems(): SidebarItem[] {
     const permissionByItem: Record<string, string> = { dashboard: 'dashboard.view', links: 'links.view', employees: 'employees.view', 'manage-employees': 'employeeDirectory.view', 'former-employees': 'formerEmployees.view', 'dell-cases': 'dellCases.view', returns: 'offboarding.view', warranty: 'warranty.view', logs: 'activity.view', users: 'users.manage' };
@@ -460,6 +466,7 @@ export class AppComponent {
   }
 
   handleLogout() {
+    this.presence.stop();
     this.auth.logout();
     this.router.navigate(['/']);
   }
@@ -578,6 +585,11 @@ export class AppComponent {
 
   toggleNotifications() { this.notificationsOpen = !this.notificationsOpen; }
   closeNotifications() { this.notificationsOpen = false; }
+  togglePresence() {
+    this.presenceOpen = !this.presenceOpen;
+    if (this.presenceOpen) { this.presence.refreshNow(); this.closeNotifications(); this.closeProfileMenu(); }
+  }
+  closePresence() { this.presenceOpen = false; }
   notificationId(event: { asset: { id: number; serial: string }; ts: string; user: string; action: string }): string {
     return `${event.asset.id}|${event.asset.serial}|${event.ts}|${event.user}|${event.action}`;
   }
@@ -678,10 +690,11 @@ export class AppComponent {
   closeProfileMenuOnOutsideClick(event: MouseEvent) {
     if (!(event.target as HTMLElement | null)?.closest('.profile-menu-root')) this.closeProfileMenu();
     if (!(event.target as HTMLElement | null)?.closest('.notification-menu-root')) this.closeNotifications();
+    if (!(event.target as HTMLElement | null)?.closest('.presence-menu-root')) this.closePresence();
   }
 
   @HostListener('document:keydown.escape')
-  closeProfileMenuOnEscape() { this.closeProfileMenu(); this.closeNotifications(); this.closeGuide(); }
+  closeProfileMenuOnEscape() { this.closeProfileMenu(); this.closeNotifications(); this.closePresence(); this.closeGuide(); }
 
   openProfile() {
     const user = this.auth.currentUser();
