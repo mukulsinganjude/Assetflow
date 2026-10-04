@@ -67,35 +67,6 @@ button, select, input, a, label, .cursor-pointer, .custom-select-trigger, .custo
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Desktop collapsed sidebar: icon-only rail. Scoped to md+ so the mobile
-   slide-in overlay always shows full labels regardless of collapsed state. */
-@media (min-width: 768px) {
-    .assetflow-shell aside.sidebar-collapsed { width: 5rem !important; }
-    html.dark .assetflow-shell aside.sidebar-collapsed { width: 5rem !important; }
-    aside.sidebar-collapsed .sidebar-logo { display: none !important; }
-    aside.sidebar-collapsed .sidebar-body > div:first-child { justify-content: flex-end; }
-    aside.sidebar-collapsed .sidebar-brand,
-    aside.sidebar-collapsed .sidebar-user,
-    aside.sidebar-collapsed .sidebar-edit-label,
-    aside.sidebar-collapsed nav span,
-    aside.sidebar-collapsed nav .fa-chevron-down { display: none; }
-    aside.sidebar-collapsed nav .assets-submenu,
-    aside.sidebar-collapsed nav .assets-nav-group .fa-chevron-right { display: none; }
-    aside.sidebar-collapsed .sidebar-body { padding-left: 0.75rem; padding-right: 0.75rem; }
-    aside.sidebar-collapsed nav a,
-    aside.sidebar-collapsed nav > div > button,
-    aside.sidebar-collapsed nav > a {
-        justify-content: center;
-        padding-left: 0; padding-right: 0;
-    }
-    aside.sidebar-collapsed nav a > i,
-    aside.sidebar-collapsed nav button > i { margin: 0; }
-    aside.sidebar-collapsed .sidebar-footer { justify-content: center; }
-    aside.sidebar-collapsed .sidebar-edit-toggle { padding: 0.4rem; }
-    aside.sidebar-collapsed nav .sidebar-sort-row > div > button { justify-content: center; padding-left: 0; padding-right: 0; }
-}
-
-
 .glass-input {
     background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(237, 242, 247, 0.85) 100%);
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -242,8 +213,6 @@ button:not(:disabled):active { transform: scale(0.96); }
 
 /* Sidebar / nav links nudge right on hover — only when labels are visible. */
 nav a:hover, nav > div > button:hover { transform: translateX(3px); }
-aside.sidebar-collapsed nav a:hover,
-aside.sidebar-collapsed nav > div > button:hover { transform: none; }
 
 /* Focus glow on glass inputs. */
 .glass-input:focus, .glass-input:focus-visible {
@@ -350,7 +319,8 @@ html.dark button[class*="bg-gradient-to-"] {
 }
 html.dark [class*="shadow-"] { box-shadow: none !important; }
 
-.assetflow-shell { background: var(--af-page); }
+.assetflow-shell { background: var(--af-page); height: 100vh; height: 100dvh; }
+body.min-h-screen { min-height: 100vh; min-height: 100dvh; }
 .assetflow-topbar {
     background: var(--af-bar);
     color: var(--af-text);

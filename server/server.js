@@ -1888,6 +1888,12 @@ app.post('/api/restore', requireRole('admin'), (req, res) => {
 
 // ---------------------------------------------------------------- Start
 app.use((err, req, res, next) => {
+  // A rejected CORS origin is a policy denial, not an application crash. Keep
+  // the response explicit without writing a full middleware stack trace to the
+  // production logs on every browser preflight/request.
+  if (err?.message === 'This website origin is not allowed to access the AssetFlow API.') {
+    return res.status(403).json({ error: err.message });
+  }
   console.error(err);
   res.status(500).json({ error: 'Internal server error.' });
 });

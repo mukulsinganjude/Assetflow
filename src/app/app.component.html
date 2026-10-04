@@ -187,7 +187,7 @@
                     <div class="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-2xl text-white shadow-md shadow-indigo-500/30"><i class="fa-solid fa-cubes text-lg"></i></div>
                     <span class="sidebar-brand text-xl font-black tracking-tight text-slate-900 dark:text-white">Asset<span class="text-indigo-500">Flow</span></span>
                 </div>
-                <button (click)="toggleSidebar()" class="text-slate-400 md:hidden"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button type="button" (click)="toggleSidebar()" class="text-slate-400 md:hidden" aria-label="Close navigation"><i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i></button>
             </div>
             <nav class="space-y-1.5" aria-label="Main navigation" (dragover)="allowNavDrop($event)" (drop)="dropNavAtEnd($event, 'main')">
                 <div *ngFor="let item of orderedSidebarItems()" class="sidebar-sort-row" [class.sidebar-sort-editing]="sidebarEditMode" [draggable]="sidebarEditMode" (dragstart)="startNavDrag($event, item.id, 'main')" (dragover)="allowNavDrop($event)" (drop)="dropNavItem($event, item.id, 'main')" (dragend)="endNavDrag()">
