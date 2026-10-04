@@ -577,7 +577,12 @@ export class EntryComponent implements OnDestroy {
     const result = await this.data.restoreArchivedRecord(row.id);
     this.restoringRecord.set(null);
     if (!result.ok) { this.archiveError.set(result.error || 'Could not restore the record.'); return; }
-    this.ui.success(`${row.type === 'asset' ? row.record.name : row.record.name} restored. The audit log records who restored it.`);
+    this.ui.success(`${this.archiveRecordName(row)} restored. The audit log records who restored it.`);
+  }
+  archiveRecordName(row: { type: string; record: any }): string {
+    if (row.type === 'deskPeripheral') return `${row.record.category} at ${row.record.deskNo}`;
+    if (row.type === 'dellCase') return `Dell case ${row.record.caseId}`;
+    return row.type === 'quickLink' ? row.record.name : row.record.name;
   }
   async deleteAsset(id: number) {
     if (!this.auth.can('assets.delete')) return;

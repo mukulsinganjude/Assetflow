@@ -319,7 +319,15 @@ export class AppComponent {
     private router: Router
   ) {
     this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder(); this.loadSidebarMode();
-    effect(() => this.auth.isLoggedIn() ? this.presence.start() : this.presence.stop());
+    effect(() => {
+      if (this.auth.isLoggedIn()) {
+        this.presence.start();
+        this.data.startLiveSync(() => this.router.url, () => { void this.auth.refreshCurrentUser(); });
+      } else {
+        this.presence.stop();
+        this.data.stopLiveSync();
+      }
+    });
   }
 
   visibleSidebarItems(): SidebarItem[] {

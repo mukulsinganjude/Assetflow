@@ -29,7 +29,8 @@ npm run dev
 
 1. Create a Supabase project.
 2. In the Supabase SQL Editor, run [`server/supabase/schema.sql`](server/supabase/schema.sql), then
-   [`server/supabase/migrations/002_relational_storage.sql`](server/supabase/migrations/002_relational_storage.sql).
+   [`server/supabase/migrations/002_relational_storage.sql`](server/supabase/migrations/002_relational_storage.sql), then
+   [`server/supabase/migrations/003_recovery_sync_state.sql`](server/supabase/migrations/003_recovery_sync_state.sql). The third migration preserves recovery records and live-update revisions in relational mode.
 3. Copy `.env.example` to `.env.local` in the project root. Set `SUPABASE_URL` from
    the project API settings and `SUPABASE_SERVICE_ROLE_KEY` to a server-side Secret
    API key (or legacy `service_role` key). Never use the publishable/anon key here or
@@ -82,6 +83,8 @@ shared demo passwords or shared password-reset answers. Set a strong
   `bcrypt.compareSync` and returns a JWT (8h expiry). The token is stored client-side
   and attached as `Authorization: Bearer <token>` by an Angular HTTP interceptor.
   A `401` response clears the session and forces re-login.
+- **Browser origins:** the API accepts the production Netlify site and local development origins. Set
+  `ASSETFLOW_CORS_ORIGINS` to a comma-separated list if you use a custom front-end domain.
 - **Authorization:** every data route under `/api/*` requires a valid token. Login is public; the legacy self-service reset endpoint is disabled.
   Write operations check role (`admin` or `entry`); destructive operations
   (delete asset, bulk delete, user management, clearing logs) require `admin`.
@@ -105,6 +108,7 @@ Public:
 Authenticated (`Authorization: Bearer <token>`):
 
 - `GET /api/assets`
+- `GET /api/changes` — lightweight revision check for other signed-in app tabs
 - `POST /api/assets` (admin/entry) · `PUT /api/assets/:id` (admin/entry) · `DELETE /api/assets/:id` (admin)
 - `POST /api/assets/bulk-status` · `POST /api/assets/bulk-delete` (admin)
 - `POST /api/assets/extend-warranty` · `POST /api/assets/process-return`
@@ -155,6 +159,12 @@ src/
 - Third-party libraries (Tailwind, Chart.js, SheetJS, QRCode) load from CDN in
   `index.html` and are typed as ambient globals.
 - Writes are serialized and the API waits for durable storage before responding.
+- **Recovery archive:** deleted asset, employee, consumable, desk setup, Dell case, and shared-link
+  records are retained for administrator restore. Restores are written to System Activity. User
+  accounts and comments are intentionally not included in this recovery archive.
+- **Live updates:** open tabs check for a small change revision every 20 seconds while visible and
+  reload the data for the current module only after another write is detected. This works across
+  users sharing one running API process; online-presence counts are held in that process's memory.
 - **Backups:** Supabase provides automated daily backups on eligible paid plans;
   free projects should regularly export a private off-site backup with the Supabase
   CLI. See [Supabase backup documentation](https://supabase.com/docs/guides/platform/backups).

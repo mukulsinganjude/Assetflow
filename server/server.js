@@ -9,7 +9,23 @@ const { signToken, requireAuth, requireRole } = require('./auth');
 const { clean, cleanMultiline, validateAsset, isValidDate, validateConsumable } = require('./validation');
 
 const app = express();
-app.use(cors());
+const allowedBrowserOrigins = new Set([
+  'https://assetflow-it.netlify.app',
+  ...(process.env.ASSETFLOW_CORS_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean)
+]);
+const isLocalDevelopmentOrigin = origin => {
+  try {
+    const url = new URL(origin);
+    const host = url.hostname.toLowerCase();
+    return ['localhost', '127.0.0.1', '::1'].includes(host) ||
+      /^10(?:\.\d{1,3}){3}$/.test(host) || /^192\.168(?:\.\d{1,3}){2}$/.test(host) ||
+      /^172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}$/.test(host);
+  } catch { return false; }
+};
+app.use(cors({ origin(origin, callback) {
+  if (!origin || allowedBrowserOrigins.has(origin) || isLocalDevelopmentOrigin(origin)) return callback(null, true);
+  return callback(new Error('This website origin is not allowed to access the AssetFlow API.'));
+} }));
 app.use(express.json({ limit: '2mb' }));
 
 // express.json only populates req.body for JSON requests; guarantee an object so
@@ -37,6 +53,7 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 3000;
 const presenceSessions = new Map();
 const PRESENCE_TIMEOUT_MS = 75_000;
+const SERVER_INSTANCE_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const ASSET_CONDITIONS = ['Good', 'Damaged', 'Needs repair'];
 const STOCK = store.STOCK_LABEL;
 const isStock = value => !String(value || '').trim() || ['stock', 'unassigned'].includes(String(value).trim().toLowerCase());
@@ -118,13 +135,13 @@ ul{line-height:1.9;padding-left:1.1rem}small{color:#94a3b8}</style></head>
 app.get('/api/health', (req, res) => res.json({ status: 'ok', assets: store.db.assets.length, users: store.db.users.length }));
 
 // Never leak passHash / securityAnswer to clients.
-const publicUser = u => ({
+const publicUser = (u, includeProfileImage = true) => ({
   username: u.username,
   email: u.email || '',
   role: u.role,
   displayName: u.displayName || '',
   title: u.title || '',
-  profileImage: u.profileImage || '',
+  ...(includeProfileImage ? { profileImage: u.profileImage || '' } : {}),
   permissions: Array.isArray(u.permissions) ? [...u.permissions] : null
 });
 const findUser = uname => store.db.users.find(u => u.username.toLowerCase() === String(uname).toLowerCase());
@@ -351,6 +368,13 @@ app.get('/api/auth/profile', (req, res) => {
   res.json(publicUser(user));
 });
 
+// Small revision token for clients with the app open on another device. It
+// avoids polling every data table when nothing changed; the client fetches its
+// current module only when the newest audited write advances.
+app.get('/api/changes', (req, res) => {
+  res.json({ version: `${SERVER_INSTANCE_ID}:${store.db.changeSequence || 0}` });
+});
+
 // A signed-in user may update only their profile picture. Account details,
 // titles, roles, and passwords are changed by administrators in User Roles.
 app.put('/api/auth/profile', (req, res) => {
@@ -499,6 +523,22 @@ app.post('/api/recovery-archive/:id/restore', requireRole('admin'), (req, res) =
     const record = archived.record;
     if ((store.db.employees || []).some(employee => employee.name.toLowerCase() === record.name.toLowerCase())) return res.status(409).json({ error: `Cannot restore: employee ${record.name} already exists.` });
     store.db.employees.push(record);
+  } else if (archived.type === 'consumable') {
+    const record = archived.record;
+    if ((store.db.consumables || []).some(row => row.name.toLowerCase() === record.name.toLowerCase() && String(row.location || '').toLowerCase() === String(record.location || '').toLowerCase())) return res.status(409).json({ error: `Cannot restore: ${record.name} already exists at that location.` });
+    store.db.consumables.unshift(record);
+  } else if (archived.type === 'deskPeripheral') {
+    const record = archived.record;
+    if ((store.db.deskPeripherals || []).some(row => String(row.serial || '').toLowerCase() === String(record.serial || '').toLowerCase())) return res.status(409).json({ error: `Cannot restore: serial ${record.serial} is already used by another desk item.` });
+    store.db.deskPeripherals.unshift(record);
+  } else if (archived.type === 'dellCase') {
+    const record = archived.record;
+    if ((store.db.dellCases || []).some(row => row.caseId.toLowerCase() === record.caseId.toLowerCase())) return res.status(409).json({ error: `Cannot restore: Dell case ${record.caseId} already exists.` });
+    store.db.dellCases.unshift(record);
+  } else if (archived.type === 'quickLink') {
+    const record = archived.record;
+    if ((store.db.quickLinks || []).some(row => row.name.toLowerCase() === record.name.toLowerCase() && row.url === record.url)) return res.status(409).json({ error: `Cannot restore: ${record.name} is already in shared links.` });
+    store.db.quickLinks.unshift(record);
   } else return res.status(400).json({ error: 'This archived record type cannot be restored.' });
   store.db.deletedRecords.splice(index, 1);
   store.addLog(req.user.username, `Restored ${archived.type} ${archived.type === 'asset' ? `${archived.record.name} (${archived.record.serial})` : archived.record.name} from recovery archive`);
@@ -1117,7 +1157,7 @@ app.post('/api/assets/warranty-import', canWrite, (req, res) => {
 });
 
 // ---------------------------------------------------------------- Users (admin)
-app.get('/api/users', requireRole('admin'), (req, res) => res.json(store.db.users.map(publicUser)));
+app.get('/api/users', requireRole('admin'), (req, res) => res.json(store.db.users.map(user => publicUser(user, false))));
 
 app.post('/api/users', requireRole('admin'), async (req, res) => {
   const email = normalizeCompanyEmail(req.body.email);
@@ -1316,10 +1356,12 @@ app.post('/api/consumables/:id/adjust', adminOnly, (req, res) => {
 
 app.delete('/api/consumables/:id', adminOnly, (req, res) => {
   const id = Number(req.params.id);
-  const before = (store.db.consumables || []).length;
-  store.db.consumables = (store.db.consumables || []).filter(c => c.id !== id);
-  if (store.db.consumables.length === before) return res.status(404).json({ error: 'Consumable not found.' });
-  store.addLog(req.user.username, `Deleted consumable id ${id}`);
+  const index = (store.db.consumables || []).findIndex(c => c.id === id);
+  if (index < 0) return res.status(404).json({ error: 'Consumable not found.' });
+  const [record] = store.db.consumables.splice(index, 1);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'consumable', record, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved consumable ${record.name} to the recovery archive`);
   store.persist();
   res.json({ ok: true });
 });
@@ -1395,7 +1437,9 @@ app.delete('/api/desk-peripherals/:id', canWrite, (req, res) => {
   const index = (store.db.deskPeripherals || []).findIndex(row => row.id === id);
   if (index < 0) return res.status(404).json({ error: 'Desk setup not found.' });
   const [removed] = store.db.deskPeripherals.splice(index, 1);
-  store.addLog(req.user.username, `Removed desk setup: ${removed.deskNo}`);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'deskPeripheral', record: removed, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved desk setup ${removed.deskNo} to the recovery archive`);
   store.persist();
   res.json({ ok: true });
 });
@@ -1522,7 +1566,9 @@ app.delete('/api/dell-cases/:id', canWrite, (req, res) => {
   const index = (store.db.dellCases || []).findIndex(item => item.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Dell case not found.' });
   const [removed] = store.db.dellCases.splice(index, 1);
-  store.addLog(req.user.username, `Deleted Dell case ${removed.caseId}`);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'dellCase', record: removed, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved Dell case ${removed.caseId} to the recovery archive`);
   store.persist();
   res.json({ ok: true });
 });
@@ -1624,7 +1670,9 @@ app.delete('/api/links/:id', canWrite, (req, res) => {
   if (!link) return res.status(404).json({ error: 'Link not found.' });
   if (req.user.role !== 'admin' && link.createdBy !== req.user.username) return res.status(403).json({ error: 'Only the link creator or an admin can remove this link.' });
   store.db.quickLinks = store.db.quickLinks.filter(item => item.id !== link.id);
-  store.addLog(req.user.username, `Removed shared link: ${link.name}`);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'quickLink', record: link, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved shared link ${link.name} to the recovery archive`);
   store.persist();
   res.json({ ok: true });
 });
@@ -1784,7 +1832,7 @@ app.post('/api/restore', requireRole('admin'), (req, res) => {
   if (Array.isArray(snap.deletedRecords)) {
     const safeDeleted = [];
     for (const raw of snap.deletedRecords.slice(0, 10000)) {
-      if (!raw || !['asset', 'employee'].includes(raw.type) || !raw.record || typeof raw.record !== 'object') continue;
+      if (!raw || !['asset', 'employee', 'consumable', 'deskPeripheral', 'dellCase', 'quickLink'].includes(raw.type) || !raw.record || typeof raw.record !== 'object') continue;
       let record;
       if (raw.type === 'asset') {
         const validated = validateAsset(raw.record, { requireDates: false });
@@ -1793,9 +1841,30 @@ app.post('/api/restore', requireRole('admin'), (req, res) => {
         if (Array.isArray(raw.record.history)) record.history = raw.record.history.map(normalizeStockHistory);
         if (Array.isArray(raw.record.comments)) record.comments = raw.record.comments;
       } else {
+        if (raw.type === 'consumable') {
+          const validated = validateConsumable(raw.record);
+          if (!validated.ok) continue;
+          record = { id: Number(raw.record.id) || store.nextId(), ...validated.value, updatedAt: raw.record.updatedAt || new Date().toISOString() };
+        } else if (raw.type === 'deskPeripheral') {
+          const validated = validateDeskPeripheral(raw.record);
+          if (validated.error) continue;
+          record = { id: Number(raw.record.id) || store.nextId(), ...validated.value };
+        } else if (raw.type === 'dellCase') {
+          const validated = validateDellCase(raw.record);
+          if (validated.error) continue;
+          record = { id: Number(raw.record.id) || store.nextId(), ...validated.value, ...(Array.isArray(raw.record.comments) ? { comments: raw.record.comments } : {}), updatedAt: raw.record.updatedAt || new Date().toISOString() };
+        } else if (raw.type === 'quickLink') {
+          const name = clean(raw.record.name, 100);
+          const purpose = clean(raw.record.purpose, 300);
+          let url;
+          try { const parsed = new URL(String(raw.record.url || '')); if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('invalid'); url = parsed.toString(); } catch { continue; }
+          if (!name) continue;
+          record = { id: Number(raw.record.id) || store.nextId(), name, url, purpose, createdBy: clean(raw.record.createdBy, 80) || 'Imported backup', createdAt: raw.record.createdAt || new Date().toISOString() };
+        } else {
         const name = clean(raw.record.name, 80);
         if (!name) continue;
         record = { ...raw.record, name, department: clean(raw.record.department, 80), cciId: clean(raw.record.cciId, 32) };
+        }
       }
       safeDeleted.push({ id: Number(raw.id) > 0 ? Number(raw.id) : store.nextId(), type: raw.type, record, deletedAt: clean(raw.deletedAt, 40) || new Date().toISOString(), deletedBy: clean(raw.deletedBy, 100) || 'Imported backup' });
     }

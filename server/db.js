@@ -141,6 +141,7 @@ function seed() {
     quickLinks: [],
     employees: [],
     seq: 1000,
+    changeSequence: 0,
     assetCommentHistoryV1: true
   };
 }
@@ -196,6 +197,7 @@ function normalizeState(state) {
   // loading a local snapshot or importing an older backup.
   delete state.audits;
   if (!Array.isArray(state.logs)) state.logs = [];
+  if (!Number.isSafeInteger(state.changeSequence) || state.changeSequence < 0) state.changeSequence = state.logs.length;
   if (!Array.isArray(state.users)) state.users = [];
   removeLegacyDemoAccounts(state);
   if (!Array.isArray(state.assets)) state.assets = [];
@@ -418,6 +420,7 @@ function nextId() {
 
 function addLog(user, action) {
   // Store one unambiguous timestamp format; the UI formats it for each user's locale.
+  db.changeSequence = (Number(db.changeSequence) || 0) + 1;
   db.logs.unshift({ timestamp: new Date().toISOString(), user: user || 'System', action });
   if (db.logs.length > 200) db.logs.length = 200;
 }

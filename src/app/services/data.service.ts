@@ -20,7 +20,7 @@ export const STATUSES = ['In Use', 'In Storage', 'Under Repair'];
 
 export interface ArchivedRecord {
   id: number;
-  type: 'asset' | 'employee';
+  type: 'asset' | 'employee' | 'consumable' | 'deskPeripheral' | 'dellCase' | 'quickLink';
   record: any;
   deletedAt: string;
   deletedBy: string;
@@ -36,11 +36,72 @@ type Result = { ok: boolean; error?: string; asset?: Asset };
 @Injectable({ providedIn: 'root' })
 export class DataService {
   private api = inject(ApiService);
+  private liveSyncTimer: ReturnType<typeof setInterval> | null = null;
+  private liveSyncRoute: (() => string) | null = null;
+  private liveSyncBusy = false;
+  private liveSyncVersion = '';
+  private readonly onLiveSyncVisible = () => { if (document.visibilityState === 'visible') void this.checkForRemoteChanges(); };
 
   readonly catalog = CATALOG;
   readonly categories = CATEGORIES;
   readonly departments = DEPARTMENTS;
   readonly statuses = STATUSES;
+
+  startLiveSync(route: () => string, onChange?: () => void): void {
+    this.stopLiveSync();
+    this.liveSyncRoute = route;
+    this.liveSyncOnChange = onChange || null;
+    void this.checkForRemoteChanges();
+    this.liveSyncTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') void this.checkForRemoteChanges();
+    }, 20_000);
+    document.addEventListener('visibilitychange', this.onLiveSyncVisible);
+  }
+
+  stopLiveSync(): void {
+    if (this.liveSyncTimer) clearInterval(this.liveSyncTimer);
+    this.liveSyncTimer = null;
+    document.removeEventListener('visibilitychange', this.onLiveSyncVisible);
+    this.liveSyncRoute = null;
+    this.liveSyncOnChange = null;
+    this.liveSyncVersion = '';
+    this.liveSyncBusy = false;
+  }
+
+  private liveSyncOnChange: (() => void) | null = null;
+
+  private async checkForRemoteChanges(): Promise<void> {
+    if (this.liveSyncBusy || !this.liveSyncRoute) return;
+    this.liveSyncBusy = true;
+    try {
+      const { version } = await firstValueFrom(this.api.get<{ version: string }>('/changes'));
+      if (!this.liveSyncVersion) this.liveSyncVersion = version;
+      else if (version && version !== this.liveSyncVersion) {
+        this.liveSyncVersion = version;
+        await this.refreshVisibleModule(this.liveSyncRoute());
+        this.liveSyncOnChange?.();
+      }
+    } catch { /* Re-check after the next interval or when the tab becomes visible. */ }
+    finally { this.liveSyncBusy = false; }
+  }
+
+  private async refreshVisibleModule(path: string): Promise<void> {
+    const route = path.split('?')[0];
+    if (route === '/dashboard' || route === '/entry') {
+      await Promise.all([this.loadAssets(), this.loadDellCases()]);
+    } else if (route === '/desk-setup') await this.loadDeskPeripherals();
+    else if (route === '/consumables') await this.loadConsumables();
+    else if (route === '/employees' || route.startsWith('/employees/')) {
+      await Promise.all([this.loadAssets(), this.loadEmployees(), this.loadEmployeeComments()]);
+    } else if (route === '/manage-employees') await Promise.all([this.loadAssets(), this.loadEmployees()]);
+    else if (route === '/returns') await Promise.all([this.loadAssets(), this.loadOffboardingChecklists(), this.loadFormerEmployees()]);
+    else if (route === '/former-employees') await this.loadFormerEmployees();
+    else if (route === '/dell-cases') await Promise.all([this.loadDellCases(), this.loadAssets(), this.loadEmployees(), this.loadFormerEmployees()]);
+    else if (route === '/warranty') await Promise.all([this.loadAssets(), this.loadDellCases()]);
+    else if (route === '/links') await this.loadQuickLinks();
+    else if (route === '/logs') await this.loadLogs();
+    else if (route === '/users') await this.loadUsers();
+  }
 
   assets = signal<Asset[]>([]);
   users = signal<User[]>([]);
@@ -385,7 +446,7 @@ export class DataService {
   async restoreArchivedRecord(id: number): Promise<Result> {
     try {
       await firstValueFrom(this.api.post(`/recovery-archive/${id}/restore`, {}));
-      await Promise.all([this.loadRecoveryArchive(), this.loadAssets(), this.loadEmployees()]);
+      await Promise.all([this.loadRecoveryArchive(), this.loadAssets(), this.loadEmployees(), this.loadConsumables(), this.loadDeskPeripherals(), this.loadDellCases(), this.loadQuickLinks()]);
       return { ok: true };
     } catch (e) { return { ok: false, error: errorMessage(e, 'Could not restore this record.') }; }
   }
