@@ -412,19 +412,27 @@
             <button type="button" (click)="closeGuide()" class="w-9 h-9 shrink-0 rounded-xl text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/10" aria-label="Close guide"><i class="fa-solid fa-xmark"></i></button>
         </header>
         <div class="flex min-h-0 flex-1 flex-col md:flex-row">
-            <nav class="shrink-0 md:w-64 border-b md:border-b-0 md:border-r border-slate-200/60 dark:border-white/10 p-2 md:p-3 overflow-x-auto md:overflow-y-auto" aria-label="Guide sections">
+            <nav class="relative z-10 shrink-0 md:w-64 border-b md:border-b-0 md:border-r border-slate-200/60 dark:border-white/10 p-2 md:p-3 md:overflow-y-auto" aria-label="Guide sections">
                 <p class="hidden md:block px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Browse guide</p>
                 <label class="relative mb-2 block md:px-1">
                     <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
                     <input type="search" [ngModel]="guideSearch()" (ngModelChange)="onGuideSearch($event)" placeholder="Search tabs and guide content" aria-label="Search guide tabs and content" class="w-full rounded-xl border border-slate-200 bg-white/70 py-2 pl-9 pr-9 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-100" />
                     <button *ngIf="guideSearch()" type="button" (click)="onGuideSearch('')" aria-label="Clear guide search" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/10"><i class="fa-solid fa-xmark"></i></button>
                 </label>
-                <div class="flex md:flex-col gap-1 min-w-max md:min-w-0">
+                <button type="button" (click)="guideMobileNavOpen = !guideMobileNavOpen" [attr.aria-expanded]="guideMobileNavOpen" aria-controls="guide-mobile-sections" class="md:hidden flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/60 px-3 py-2.5 text-left text-xs font-semibold text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-950/30 dark:text-slate-200">
+                    <span class="flex min-w-0 items-center gap-2"><i class="fa-solid w-4 shrink-0 text-center text-indigo-500" [ngClass]="activeGuideSection?.icon || (selectedGuideTab === 'Role permissions' ? 'fa-shield-halved' : 'fa-circle-info')"></i><span class="truncate">{{ selectedGuideTab }}</span></span>
+                    <span class="shrink-0 text-[10px] text-slate-400">{{ guideNavigationItems().length }} sections <i class="fa-solid ml-1" [ngClass]="guideMobileNavOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i></span>
+                </button>
+                <div id="guide-mobile-sections" *ngIf="guideMobileNavOpen" class="mt-2 grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-xl border border-slate-200/70 bg-white/85 p-1.5 shadow-lg dark:border-white/10 dark:bg-slate-900 md:hidden">
+                    <button *ngFor="let item of guideNavigationItems()" type="button" (click)="selectGuideTab(item.title)" class="flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-semibold" [ngClass]="selectedGuideTab === item.title ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/5'"><i class="fa-solid w-4 shrink-0 text-center" [ngClass]="item.icon"></i><span class="break-words">{{ item.title }}</span></button>
+                    <p *ngIf="guideNavigationItems().length === 0" class="col-span-2 px-3 py-3 text-xs text-slate-500 dark:text-slate-400">No guide matches. Try another word.</p>
+                </div>
+                <div class="hidden gap-1 md:flex md:flex-col">
                     <button *ngFor="let item of guideNavigationItems()" type="button" (click)="selectGuideTab(item.title)" class="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition md:w-full" [ngClass]="selectedGuideTab === item.title ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/5'"><i class="fa-solid w-4 text-center" [ngClass]="item.icon"></i><span>{{ item.title }}</span></button>
                     <p *ngIf="guideNavigationItems().length === 0" class="px-3 py-3 text-xs text-slate-500 dark:text-slate-400 md:w-full">No guide matches. Try another word.</p>
                 </div>
             </nav>
-            <div class="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">
+            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-7">
                 <ng-container *ngIf="selectedGuideTab !== 'Role permissions' && selectedGuideTab !== 'Useful notes'; else guideSpecialTab">
                     <ng-container *ngIf="activeGuideSection as item">
                         <div class="flex flex-wrap items-start justify-between gap-3">

@@ -24,6 +24,7 @@ type ActivityEvent = HistoryEntry & { asset: Asset };
 })
 export class AppComponent {
   guideOpen = false;
+  guideMobileNavOpen = false;
   selectedGuideTab = 'Dashboard';
   guideSearch = signal('');
   readonly guideSections = [
@@ -571,8 +572,8 @@ export class AppComponent {
 
   toggleProfileMenu() { this.profileMenuOpen = !this.profileMenuOpen; }
   closeProfileMenu() { this.profileMenuOpen = false; }
-  openGuide() { this.closeProfileMenu(); if (this.pageGuide) this.selectedGuideTab = this.pageGuide.title; this.guideSearch.set(''); this.guideOpen = true; }
-  selectGuideTab(title: string) { this.selectedGuideTab = title; }
+  openGuide() { this.closeProfileMenu(); if (this.pageGuide) this.selectedGuideTab = this.pageGuide.title; this.guideSearch.set(''); this.guideMobileNavOpen = false; this.guideOpen = true; }
+  selectGuideTab(title: string) { this.selectedGuideTab = title; this.guideMobileNavOpen = false; }
   closeGuide() { this.guideOpen = false; }
 
   toggleNotifications() { this.notificationsOpen = !this.notificationsOpen; }
