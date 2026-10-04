@@ -126,6 +126,16 @@ const publicUser = u => ({
   permissions: Array.isArray(u.permissions) ? [...u.permissions] : null
 });
 const findUser = uname => store.db.users.find(u => u.username.toLowerCase() === String(uname).toLowerCase());
+const publicComment = comment => ({
+  ...comment,
+  authorName: findUser(comment.user)?.displayName?.trim() || comment.authorName || comment.user
+});
+const publicAsset = asset => Array.isArray(asset.comments)
+  ? { ...asset, comments: asset.comments.map(publicComment) }
+  : asset;
+const publicDellCase = row => Array.isArray(row.comments)
+  ? { ...row, comments: row.comments.map(publicComment) }
+  : row;
 const findUserByLogin = identifier => {
   const value = clean(identifier, 254).trim();
   if (!isCompanyEmail(value)) return null;
@@ -325,7 +335,7 @@ app.put('/api/auth/profile', (req, res) => {
 });
 
 // ---------------------------------------------------------------- Assets
-app.get('/api/assets', (req, res) => res.json(store.db.assets));
+app.get('/api/assets', (req, res) => res.json(store.db.assets.map(publicAsset)));
 
 const canWrite = requireRole('admin', 'entry');
 
@@ -507,7 +517,7 @@ app.post('/api/assets/:id/comments', canWrite, (req, res) => {
   store.pushHistory(asset, req.user.username, `Comment added: ${text}`);
   store.addLog(req.user.username, `Commented on ${asset.name} (${asset.serial})`);
   store.persist();
-  res.status(201).json(comment);
+  res.status(201).json(publicComment(comment));
 });
 
 app.delete('/api/assets/:id/comments/:commentId', canWrite, (req, res) => {
@@ -557,7 +567,10 @@ app.put('/api/assets/:id/comments/:commentId', canWrite, (req, res) => {
 // containing percent-encoded characters (and throws for a literal "%").
 const empKey = raw => clean(String(raw || ''), 80);
 
-app.get('/api/employee-comments', (req, res) => res.json(store.db.employeeComments || {}));
+app.get('/api/employee-comments', (req, res) => {
+  const comments = store.db.employeeComments || {};
+  res.json(Object.fromEntries(Object.entries(comments).map(([name, rows]) => [name, Array.isArray(rows) ? rows.map(publicComment) : rows])));
+});
 
 app.post('/api/employee-comments/:name', canWrite, (req, res) => {
   const name = empKey(req.params.name);
@@ -572,7 +585,7 @@ app.post('/api/employee-comments/:name', canWrite, (req, res) => {
   store.db.employeeComments[name] = list;
   store.addLog(req.user.username, `Commented on employee ${name}`);
   store.persist();
-  res.status(201).json(comment);
+  res.status(201).json(publicComment(comment));
 });
 
 app.put('/api/employee-comments/:name/:commentId', canWrite, (req, res) => {
@@ -1391,7 +1404,7 @@ function validateDellCase(body) {
   return { value };
 }
 
-app.get('/api/dell-cases', (req, res) => res.json(store.db.dellCases || []));
+app.get('/api/dell-cases', (req, res) => res.json((store.db.dellCases || []).map(publicDellCase)));
 
 app.post('/api/dell-cases/import', canWrite, (req, res) => {
   const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
@@ -1454,7 +1467,7 @@ app.post('/api/dell-cases/:id/comments', canWrite, (req, res) => {
   row.comments.unshift(comment);
   store.addLog(req.user.username, `Commented on Dell case ${row.caseId}`);
   store.persist();
-  res.status(201).json(comment);
+  res.status(201).json(publicComment(comment));
 });
 
 app.put('/api/dell-cases/:id/comments/:commentId', canWrite, (req, res) => {

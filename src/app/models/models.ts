@@ -35,6 +35,8 @@ export interface CommentEntry {
   editedTs?: string;
   /** Username of the author. */
   user: string;
+  /** Display name of the author, joined by the API for presentation. */
+  authorName?: string;
   /** Free-text note. */
   text: string;
 }

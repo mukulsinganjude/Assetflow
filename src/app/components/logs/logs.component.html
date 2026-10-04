@@ -66,7 +66,7 @@
           <tr *ngIf="pageResult().sliced.length === 0"><td colspan="3" class="p-6 text-center text-slate-500 dark:text-slate-400 font-sans">{{ hasFilters() ? 'No audit logs match your filters.' : 'No audit logs recorded yet.' }}</td></tr>
           <tr *ngFor="let log of pageResult().sliced" class="hover:bg-white/40 dark:hover:bg-white/5 transition">
             <td class="p-4 text-slate-500 dark:text-slate-400">{{ formatTimestamp(log.timestamp) }}</td>
-            <td class="p-4 font-bold text-indigo-600 dark:text-indigo-400 uppercase">{{ log.user }}</td>
+            <td class="p-4 font-bold text-indigo-600 dark:text-indigo-400 normal-case">{{ log.user.toLowerCase() }}</td>
             <td class="p-4 text-slate-700 dark:text-slate-300 font-sans">{{ log.action }}</td>
           </tr>
         </tbody>

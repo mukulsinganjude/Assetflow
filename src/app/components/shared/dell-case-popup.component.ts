@@ -50,7 +50,7 @@ import { EmojiPickerComponent } from './emoji-picker.component';
             <p *ngIf="!row.comments?.length" class="text-xs italic text-slate-500 py-1">No comments yet. Be the first to add one.</p>
             <article *ngFor="let c of row.comments" class="rounded-xl bg-slate-500/5 p-3">
               <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0 flex-1"><p class="text-[11px] font-bold text-slate-500">{{ c.user }} · {{ commentTime(c.ts) }} <span *ngIf="c.editedTs" class="italic">(edited)</span></p>
+                <div class="min-w-0 flex-1"><p class="text-[11px] font-bold text-slate-500">{{ data.displayNameFor(c.authorName || c.user) }} · {{ commentTime(c.ts) }} <span *ngIf="c.editedTs" class="italic">(edited)</span></p>
                   <p *ngIf="editingId() !== c.id" class="text-sm whitespace-pre-wrap break-words mt-1">{{ c.text }}</p>
                   <div *ngIf="editingId() === c.id" class="mt-2 space-y-2"><div class="flex items-end gap-2"><textarea rows="2" maxlength="500" class="glass-input flex-1 rounded-xl px-3 py-2 text-sm" [ngModel]="editText()" (ngModelChange)="editText.set($event)" [ngModelOptions]="{standalone:true}"></textarea><app-emoji-picker [text]="editText()" (textChange)="editText.set($event)"></app-emoji-picker></div><div class="flex justify-end gap-2"><button type="button" class="px-3 py-1 rounded-lg" (click)="cancelEdit()">Cancel</button><button type="button" class="bg-blue-600 text-white px-3 py-1 rounded-lg disabled:opacity-50" [disabled]="editSaving() || !editText().trim()" (click)="saveCommentEdit(row.id, c)">Save</button></div></div>
                 </div>

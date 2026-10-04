@@ -39,6 +39,13 @@ export class DataService {
   auditLogs = signal<AuditLog[]>([]);
   logsLoading = signal(false);
   logsError = signal('');
+  displayNameFor(username: string): string {
+    const value = String(username || '').trim();
+    if (!value) return 'User';
+    const account = this.users().find(user =>
+      user.username.toLowerCase() === value.toLowerCase() || String(user.email || '').toLowerCase() === value.toLowerCase());
+    return account?.displayName?.trim() || value;
+  }
   /** Employee-level comments, keyed by employee name (employees have no asset id). */
   employeeComments = signal<Record<string, CommentEntry[]>>({});
   /** Quantity-tracked consumables (admin-managed). */

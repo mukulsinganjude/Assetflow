@@ -242,8 +242,8 @@
         <div *ngFor="let c of liveComments()" class="glass-card rounded-2xl p-3">
           <div class="flex items-center justify-between mb-1">
             <div class="flex items-center gap-2 min-w-0">
-              <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{{ c.user.charAt(0) }}</div>
-              <span class="text-xs font-bold text-slate-800 dark:text-white truncate">{{ c.user }}</span>
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{{ data.displayNameFor(c.authorName || c.user).charAt(0) }}</div>
+              <span class="text-xs font-bold text-slate-800 dark:text-white truncate">{{ data.displayNameFor(c.authorName || c.user) }}</span>
               <span class="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">· {{ commentTime(c.ts) }}</span>
             </div>
             <button *ngIf="canDeleteComment(c)" (click)="deleteComment(c.id)" class="text-slate-400 hover:text-rose-400 transition shrink-0 ml-2" title="Delete comment"><i class="fa-solid fa-trash-can text-xs"></i></button>
