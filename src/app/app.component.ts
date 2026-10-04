@@ -41,7 +41,71 @@ export class AppComponent {
     { title: 'Warranty & Forecast', icon: 'fa-shield-halved', access: 'Everyone', description: 'Review warranty coverage and identify assets approaching warranty end.', steps: 'Use search and filters to find an asset. Check purchase and warranty dates before planning renewal or replacement.' },
     { title: 'Links', icon: 'fa-link', access: 'Everyone', description: 'Open shared company resources and commonly used websites.', steps: 'Select a saved link to open it. Admins can maintain the shared link list.' },
     { title: 'Activity Trail', icon: 'fa-clock-rotate-left', access: 'Everyone', description: 'Review recorded changes and actions across the inventory.', steps: 'Filter by date, user, or action to find an event. Use this page to trace who changed an asset or recorded a handover.' },
-    { title: 'User Roles', icon: 'fa-user-shield', access: 'Admins', description: 'Create user accounts and manage access roles and job titles.', steps: 'Add or edit a user and assign the appropriate role. Viewers can inspect data; data-entry users can update operational records; admins can manage users and settings.' }
+    { title: 'User Roles', icon: 'fa-user-shield', access: 'Admins', description: 'Create user accounts and manage access roles and job titles.', steps: 'Add or edit a user and assign the appropriate role. Viewers can inspect data; data-entry users can update operational records; admins can manage users and settings.' },
+    { title: 'Workflow map', icon: 'fa-diagram-project', access: 'All users', description: 'Follow the main paths through AssetFlow, from signing in to completing common inventory, handover, and access tasks.', steps: 'Choose a workflow below and follow its arrows from one screen to the next. Each path shows where to start, what to do, and where to check the result.' }
+  ];
+  readonly guideWorkflowRows = [
+    { title: 'Sign in and get oriented', icon: 'fa-right-to-bracket', flow: 'Company email + password → Dashboard → choose a section from the sidebar', detail: 'Use the Dashboard to search or filter assets. The help button opens this guide; the header contains online presence, notifications, and profile controls.' },
+    { title: 'Add and assign equipment', icon: 'fa-laptop', flow: 'Asset Entry → Add Asset → enter model and unique serial → choose status and assignee → Save → verify on Dashboard or Employees', detail: 'Set In Storage for available stock. Set In Use and choose an active employee when assigning immediately. Add dates and department when known.' },
+    { title: 'Record a handover', icon: 'fa-arrow-right-arrow-left', flow: 'Dashboard or Employees → find asset → Check out / Check in → confirm employee, assignment, condition, and accessories → Save → verify status and history', detail: 'Check out assigns available equipment. Check in records a returned item and updates its location and status.' },
+    { title: 'Complete offboarding', icon: 'fa-clipboard-check', flow: 'Offboarding Returns → select employee → start checklist → inspect each asset → record condition and accessories → mark returned → Former Employees', detail: 'Good items return to In Storage. Damaged or Needs repair items move Under Repair. The completed departure record is saved for later review.' },
+    { title: 'Manage people and access', icon: 'fa-user-shield', flow: 'Manage Employees → maintain directory → User Roles (admin) → select/add user → choose role → set individual permissions if needed → save', detail: 'The employee directory supplies people for assignments and offboarding. A custom user permission list replaces that user’s role defaults. Admins retain full access.' },
+    { title: 'Find and export records', icon: 'fa-magnifying-glass', flow: 'Open the relevant tab → search → apply filters → review results and pagination → Export (if permitted)', detail: 'Search and filters only narrow displayed results. Use the module template for bulk changes and review validation or skipped-row messages after importing.' },
+    { title: 'Track supplies and support', icon: 'fa-boxes-stacked', flow: 'Consumables → add item and threshold → adjust stock; Dell Cases → register case against asset → update status and comments', detail: 'Consumables track quantities and reorder thresholds. Dell Cases keep the support ID, affected equipment, issue, status, and follow-up notes together.' }
+  ];
+  readonly guideWorkflowGroups = [
+    { title: 'Inventory lifecycle', items: this.guideWorkflowRows.slice(1, 3) },
+    { title: 'People and access', items: [this.guideWorkflowRows[3], this.guideWorkflowRows[4]] },
+    { title: 'Search and operations', items: this.guideWorkflowRows.slice(5) }
+  ];
+  readonly guideScreenGroups = [
+    { title: 'Overview and equipment', items: [
+      { name: 'Dashboard', purpose: 'See the asset overview, current assignments, upcoming warranty dates, and quick actions.', workflow: 'Search or filter equipment → open an asset for details/history → check it in or out → verify its assignee and status.' },
+      { name: 'Asset Entry', purpose: 'Create and maintain individually tracked equipment.', workflow: 'Add Asset → choose category/model → enter a unique serial → set status, department, and assignee → save → verify on Dashboard.' },
+      { name: 'Desk Setup', purpose: 'Record peripherals installed at desks.', workflow: 'Find a desk/person → add peripheral type, model, and serial → save → review the desk record.' },
+      { name: 'Consumables', purpose: 'Track quantity-based supplies, locations, and reorder thresholds.', workflow: 'Add item and quantity → set unit/location/threshold → adjust stock when it changes → review low-stock indicators.' }
+    ] },
+    { title: 'People and equipment lifecycle', items: [
+      { name: 'Employees', purpose: 'Find employees and see the equipment assigned to them.', workflow: 'Search by name → open employee details → review equipment/history/comments → use an allowed asset action.' },
+      { name: 'Manage Employees', purpose: 'Maintain the employee directory used for assignments and offboarding.', workflow: 'Search first → add/import or edit a directory record → save → verify it appears in assignment pickers.' },
+      { name: 'Offboarding Returns', purpose: 'Track a departure and recover assigned equipment.', workflow: 'Select employee → start checklist → inspect assets → record condition/accessories/notes → mark returns → complete checklist.' },
+      { name: 'Former Employees', purpose: 'Review saved records after offboarding is complete.', workflow: 'Search the former employee list → inspect the saved departure snapshot → export/archive if allowed.' }
+    ] },
+    { title: 'Support, reporting, and access', items: [
+      { name: 'Dell Cases', purpose: 'Track support cases connected to assets and employees.', workflow: 'Add case → link equipment/person → enter case ID, date, issue, and status → add progress comments → update or close.' },
+      { name: 'Warranty & Forecast', purpose: 'Review coverage dates and upcoming warranty risk.', workflow: 'Filter by period/status → inspect an asset or case → update/import warranty information if authorized → export if allowed.' },
+      { name: 'Links', purpose: 'Keep useful internal resources in one shared list.', workflow: 'Add a clearly named link and purpose → open the resource when needed → remove outdated links if permitted.' },
+      { name: 'Activity Trail', purpose: 'Review actions recorded by the application.', workflow: 'Search/filter the audit list → inspect who changed what and when → export if authorized.' },
+      { name: 'User Roles', purpose: 'Manage accounts, role defaults, and user-specific access.', workflow: 'Admin adds/selects a user → chooses role → optionally sets individual permissions → saves → verifies access.' },
+      { name: 'Online tracker and Website Guide', purpose: 'See who is active and get contextual help.', workflow: 'Open the header online control to see names and last-updated times or hide your own presence; open the help button to browse tab instructions, workflow examples, and useful notes.' }
+    ] }
+  ];
+  readonly guideCommonTasks = [
+    { title: 'Add and assign a new asset', steps: ['Open Asset Entry or the asset shortcut on Dashboard.', 'Choose Add Asset and enter category, model, and a unique serial number.', 'Choose status and department; select an employee and assignment type if assigning now.', 'Add purchase/warranty dates and other known details, then save.', 'Check Dashboard or the employee page to confirm the asset and assignment.'] },
+    { title: 'Check an asset out or back in', steps: ['Find the asset on Dashboard, Asset Entry, or the employee details page.', 'Choose check-out to assign available stock, or check-in to record its return.', 'Confirm the employee/assignment and record handover condition or accessories when prompted.', 'Save and verify the updated owner and status in the asset record.'] },
+    { title: 'Offboard an employee', steps: ['Open Offboarding Returns and search for the employee.', 'Start a checklist and review outstanding equipment.', 'Inspect each item and record condition, accessories, and notes.', 'Mark each return and complete offboarding after all items are handled.', 'Review the resulting record in Former Employees.'] },
+    { title: 'Add a user and control access', steps: ['An administrator opens User Roles and adds or selects the account.', 'Assign the closest default role: Admin, Data Entry, or Viewer.', 'If needed, set individual permissions; a saved override replaces that user’s role defaults.', 'Save, then have the user sign in again or refresh their profile before verifying access.'] },
+    { title: 'Find or export records', steps: ['Open the relevant screen and search by a name, serial, model, or identifier.', 'Apply category, status, date, or department filters where present.', 'Check the visible results and page controls.', 'Choose Export if the account has export permission.'] }
+  ];
+  readonly guideReferenceNotes = [
+    'Search and filters narrow displayed lists; they do not change or delete records.',
+    'Asset statuses: In Use means assigned; In Storage means available stock; Under Repair means it needs repair follow-up.',
+    'During offboarding, Good returns to In Storage. Damaged and Needs repair move Under Repair.',
+    'Check serial numbers and other identifiers before saving or importing. Use the module import template and review skipped-row messages; use company email addresses for accounts.',
+    'Export is available only where the account has permission. Review the result list and pagination before exporting.',
+    'If a tab or action is missing, ask an administrator to review the role and individual permission override.',
+    'The online list is shared only by sessions connected to the same API service; local and hosted sites can show separate lists.',
+    'On mobile, the sidebar opens as a drawer. Close it after selecting a screen; wide tables/forms may scroll within their own panel.',
+    'The left navigation can be reordered by each user; section names stay the same.',
+    'Confirm employee, asset, and serial details before destructive actions. Use archive/restore tools where available; restores record who performed them in the audit trail.',
+    'This guide describes the application; the current user’s role and individual access settings decide which actions are available.'
+  ];
+  readonly guideSupportPaths = [
+    { problem: 'A screen or action is missing', next: 'Ask an administrator to check role and user-specific permissions.' },
+    { problem: 'Data looks missing or outdated', next: 'Refresh, verify search/filters, and confirm you are using the intended local or hosted environment.' },
+    { problem: 'Sign-in or API error', next: 'Check the company email and password; if the request still fails, confirm the hosted API is healthy and review the hosting logs.' },
+    { problem: 'Asset or employee data is incorrect', next: 'Correct it in the module that owns the record, then review the Activity Trail.' },
+    { problem: 'Need help with a task', next: 'Search this guide for the tab or task, then follow its example and steps.' }
   ];
   readonly guideStepLists: Record<string, string[]> = {
     'Dashboard': ['Use the search field to look up an asset by model, serial number, or assigned employee.', 'Use the summary cards and filters to narrow the inventory view.', 'Open an asset row for its details and history.', 'Choose Check out to assign available stock, or Check in to record a return.', 'Confirm the updated assignee and status in the asset list.'],
@@ -56,7 +120,8 @@ export class AppComponent {
     'Warranty & Forecast': ['Open Warranty & Forecast.', 'Search for an asset by model or serial, or filter the list by warranty period.', 'Review purchase and warranty dates and the remaining coverage.', 'Use approaching-expiry information to plan renewal or replacement, and verify dates against the asset record.'],
     'Links': ['Open Links to see shared company resources.', 'Select a link to open the resource.', 'If a link is missing or outdated, ask an administrator to update the shared list.'],
     'Activity Trail': ['Open Activity Trail.', 'Filter by date, user, or action to narrow the event list.', 'Review the event, affected record, and person who made the change.', 'Export the results if you need to keep or share a report.'],
-    'User Roles': ['Open User Roles (available to administrators).', 'Choose Add User and enter the display name, company email, password, and access role.', 'Set the user’s job title here; profile settings do not allow users to change their title.', 'When editing, confirm the email, role, and title before saving.', 'Use the lowest access role needed: Viewer is read-only, Data Entry handles daily records, and Admin manages users and restricted settings.']
+    'User Roles': ['Open User Roles (available to administrators).', 'Choose Add User and enter the display name, company email, password, and access role.', 'Set the user’s job title here; profile settings do not allow users to change their title.', 'When editing, confirm the email, role, and title before saving.', 'Use the lowest access role needed: Viewer is read-only, Data Entry handles daily records, and Admin manages users and restricted settings.'],
+    'Workflow map': ['Start at Dashboard after signing in, then open the section that owns the task.', 'For asset lifecycle tasks, use Asset Entry to create records, Dashboard or Employees to hand equipment over, and Offboarding Returns to recover equipment.', 'For staff and access, keep the employee directory current, then manage account roles and individual access in User Roles (admins only).', 'Use search and filters to locate records; use Activity Trail to review recorded changes.', 'Confirm the saved result in the related list or employee record.']
   };
   readonly guideExamples: Record<string, { caption: string; fields: { label: string; value: string }[] }> = {
     'Dashboard': { caption: 'Example asset details', fields: [{ label: 'Asset', value: 'Dell Latitude 5450' }, { label: 'Serial number', value: 'DL-5450-901' }, { label: 'Assigned to', value: 'Sarah Jenkins' }, { label: 'Status', value: 'In Use' }] },
@@ -71,7 +136,8 @@ export class AppComponent {
     'Warranty & Forecast': { caption: 'Example warranty record', fields: [{ label: 'Asset', value: 'Dell Latitude 5450' }, { label: 'Purchase date', value: '2024-01-15' }, { label: 'Warranty date', value: '2027-01-15' }, { label: 'Coverage', value: 'Active' }] },
     'Links': { caption: 'Example shared link', fields: [{ label: 'Name', value: 'IT Service Desk' }, { label: 'Website', value: 'https://support.example.com' }, { label: 'Category', value: 'Support' }] },
     'Activity Trail': { caption: 'Example activity entry', fields: [{ label: 'Action', value: 'Asset checked out' }, { label: 'Asset serial', value: 'DL-5450-901' }, { label: 'User', value: 'Admin_Mukul' }, { label: 'Date', value: 'Oct 4, 2026 · 10:30 AM' }] },
-    'User Roles': { caption: 'Example user setup', fields: [{ label: 'Display name', value: 'Jordan Lee' }, { label: 'Company email', value: 'jordan@example.com' }, { label: 'Title', value: 'IT Support' }, { label: 'Access role', value: 'Data Entry' }] }
+    'User Roles': { caption: 'Example user setup', fields: [{ label: 'Display name', value: 'Jordan Lee' }, { label: 'Company email', value: 'jordan@example.com' }, { label: 'Title', value: 'IT Support' }, { label: 'Access role', value: 'Data Entry' }] },
+    'Workflow map': { caption: 'Example asset lifecycle', fields: [{ label: 'Create', value: 'Asset Entry · serial DL-5450-901' }, { label: 'Assign', value: 'Dashboard · Sarah Jenkins' }, { label: 'Return', value: 'Offboarding Returns · Good' }, { label: 'Final status', value: 'In Storage · Former Employees record saved' }] }
   };
   readonly rolePermissionRows = [
     { section: 'Dashboard / Asset list', admin: 'View, add, edit, assign, import, export, delete', entry: 'View, add, edit, assign, import, export', viewer: 'View only' },
@@ -87,6 +153,7 @@ export class AppComponent {
     { section: 'Links', admin: 'Add, import, edit/delete any link', entry: 'Add/import; delete own links', viewer: 'View only' },
     { section: 'Activity Trail', admin: 'View, filter, export, clear logs', entry: 'View, filter, export', viewer: 'View, filter, export' },
     { section: 'User Roles', admin: 'Create/edit/delete users, change roles and titles, backup/restore', entry: 'No access', viewer: 'No access' },
+    { section: 'Backup and restore', admin: 'Create backups and restore records; restores are recorded', entry: 'No access', viewer: 'No access' },
     { section: 'Profile settings', admin: 'Update own profile and password', entry: 'Update own profile and password', viewer: 'Update own profile and password' }
   ];
   readonly guideNavigationItems = computed(() => {
@@ -100,6 +167,9 @@ export class AppComponent {
   });
 
   private guideSearchText(title: string): string {
+    if (title === 'Workflow map') {
+      return ['Workflow map', ...this.guideWorkflowRows.flatMap(row => [row.title, row.flow, row.detail]), ...this.guideWorkflowGroups.map(group => group.title), ...this.guideScreenGroups.flatMap(group => [group.title, ...group.items.flatMap(item => [item.name, item.purpose, item.workflow])]), ...this.guideCommonTasks.flatMap(task => [task.title, ...task.steps]), ...this.guideReferenceNotes, ...this.guideSupportPaths.flatMap(path => [path.problem, path.next]), ...(this.guideStepLists['Workflow map'] || [])].join(' ').toLowerCase();
+    }
     if (title === 'Role permissions') {
       return ['Role permissions', ...this.rolePermissionRows.flatMap(row => [row.section, row.admin, row.entry, row.viewer]),
         'Admin Data Entry Viewer full access read only add edit delete import export manage users backup restore'].join(' ').toLowerCase();

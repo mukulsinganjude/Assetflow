@@ -463,6 +463,76 @@
                             <div class="flex items-start gap-3"><span class="w-11 h-11 shrink-0 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><i class="fa-solid text-lg" [ngClass]="item.icon"></i></span><div><h3 class="text-xl font-black text-slate-900 dark:text-white">{{ item.title }}</h3><p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ item.description }}</p></div></div>
                             <span class="rounded-full bg-slate-500/10 px-3 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-300">{{ item.access }}</span>
                         </div>
+                        <section *ngIf="selectedGuideTab === 'Workflow map'" class="mt-5">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-diagram-project text-indigo-500"></i><h4 class="text-sm font-bold text-slate-900 dark:text-white">Website workflow tree</h4></div>
+                            <div class="mt-3 rounded-2xl border border-indigo-500/25 bg-indigo-500/[0.04] p-4 sm:p-5">
+                                <div class="mx-auto flex max-w-xl items-center gap-3 rounded-xl border border-indigo-500/25 bg-white/75 p-3 dark:bg-slate-900/70">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><i class="fa-solid fa-right-to-bracket"></i></span>
+                                    <div><p class="text-xs font-bold text-slate-800 dark:text-slate-100">Start here</p><p class="mt-0.5 text-xs text-indigo-700 dark:text-indigo-200">Sign in → Dashboard → choose a task branch</p></div>
+                                </div>
+                                <div class="mx-auto h-6 w-px bg-indigo-400/60"></div>
+                                <div class="grid gap-4 xl:grid-cols-3">
+                                    <section *ngFor="let group of guideWorkflowGroups" class="relative rounded-xl border border-slate-200/80 bg-white/50 p-3 dark:border-white/10 dark:bg-slate-950/20">
+                                        <h5 class="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-200"><span class="h-2 w-2 rounded-full bg-indigo-500"></span>{{ group.title }}</h5>
+                                        <div class="ml-1 mt-3 space-y-3 border-l-2 border-indigo-300/60 pl-3 dark:border-indigo-400/30">
+                                            <article *ngFor="let workflow of group.items" class="relative rounded-lg border border-slate-200/70 bg-white/80 p-3 dark:border-white/10 dark:bg-slate-900/70">
+                                                <span class="absolute -left-[1.08rem] top-4 h-2 w-2 rounded-full border-2 border-indigo-500 bg-white dark:bg-slate-900"></span>
+                                                <h6 class="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100"><i class="fa-solid w-4 text-center text-sky-500" [ngClass]="workflow.icon"></i>{{ workflow.title }}</h6>
+                                                <p class="mt-2 text-[11px] font-semibold leading-relaxed text-indigo-700 dark:text-indigo-200">{{ workflow.flow }}</p>
+                                                <p class="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{{ workflow.detail }}</p>
+                                            </article>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </section>
+                        <div *ngIf="selectedGuideTab === 'Workflow map'" class="mt-5 space-y-4">
+                            <section class="rounded-2xl border border-slate-200/70 p-4 sm:p-5 dark:border-white/10">
+                                <h4 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-sitemap text-indigo-500"></i>Screen-by-screen reference</h4>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Expand a branch to see what each screen is for and its usual path.</p>
+                                <div class="mt-3 space-y-2">
+                                    <details *ngFor="let group of guideScreenGroups" class="group rounded-xl border border-indigo-500/15 bg-indigo-500/[0.025] p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold text-indigo-700 marker:hidden dark:text-indigo-200"><span><i class="fa-solid fa-folder-tree mr-2"></i>{{ group.title }}</span><i class="fa-solid fa-chevron-down text-[10px] transition group-open:rotate-180"></i></summary>
+                                        <div class="ml-1 mt-3 space-y-2 border-l-2 border-indigo-300/60 pl-3 dark:border-indigo-400/30">
+                                            <article *ngFor="let screen of group.items" class="relative rounded-lg border border-slate-200/70 bg-white/75 p-3 dark:border-white/10 dark:bg-slate-900/60">
+                                                <span class="absolute -left-[1.08rem] top-4 h-2 w-2 rounded-full border-2 border-indigo-500 bg-white dark:bg-slate-900"></span>
+                                                <h5 class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ screen.name }}</h5>
+                                                <p class="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300"><strong class="text-slate-700 dark:text-slate-200">Purpose:</strong> {{ screen.purpose }}</p>
+                                                <p class="mt-1 text-[11px] leading-relaxed text-indigo-700 dark:text-indigo-200"><strong>Typical path:</strong> {{ screen.workflow }}</p>
+                                            </article>
+                                        </div>
+                                    </details>
+                                </div>
+                            </section>
+                            <section class="rounded-2xl border border-slate-200/70 p-4 sm:p-5 dark:border-white/10">
+                                <h4 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-list-check text-emerald-500"></i>Common tasks, step by step</h4>
+                                <div class="mt-3 space-y-2">
+                                    <details *ngFor="let task of guideCommonTasks" class="group rounded-xl border border-slate-200/70 bg-white/60 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold text-slate-800 marker:hidden dark:text-slate-100"><span>{{ task.title }}</span><i class="fa-solid fa-chevron-down text-[10px] text-emerald-600 transition group-open:rotate-180 dark:text-emerald-300"></i></summary>
+                                        <ol class="ml-1 mt-3 space-y-2 border-l-2 border-emerald-400/40 pl-4">
+                                            <li *ngFor="let step of task.steps; let index = index" class="relative flex gap-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300"><span class="absolute -left-[1.32rem] top-0.5 h-4 w-4 rounded-full bg-emerald-500/10 text-center text-[9px] font-bold leading-4 text-emerald-700 dark:text-emerald-200">{{ index + 1 }}</span>{{ step }}</li>
+                                        </ol>
+                                    </details>
+                                </div>
+                            </section>
+                            <section class="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.025] p-4 sm:p-5">
+                                <h4 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-shield-halved text-indigo-500"></i>Roles and access</h4>
+                                <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">Built-in roles are Admin, Data Entry, and Viewer. Admins retain full access. An administrator can give an individual user a custom permission list; that list replaces their role defaults. The API checks permissions as well as the page controls.</p>
+                                <button type="button" (click)="selectGuideTab('Role permissions')" class="mt-3 rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-indigo-700">Open role permissions table <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                            </section>
+                            <section class="rounded-2xl border border-slate-200/70 p-4 sm:p-5 dark:border-white/10">
+                                <h4 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-circle-info text-sky-500"></i>Shared controls and useful notes</h4>
+                                <ul class="mt-3 space-y-2 border-l-2 border-sky-400/40 pl-4">
+                                    <li *ngFor="let note of guideReferenceNotes" class="relative text-xs leading-relaxed text-slate-600 dark:text-slate-300"><span class="absolute -left-[1.32rem] top-1.5 h-2 w-2 rounded-full bg-sky-500"></span>{{ note }}</li>
+                                </ul>
+                            </section>
+                            <section class="rounded-2xl border border-amber-500/20 bg-amber-500/[0.025] p-4 sm:p-5">
+                                <h4 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-route text-amber-500"></i>Help and troubleshooting path</h4>
+                                <div class="mt-3 space-y-2 border-l-2 border-amber-400/50 pl-4">
+                                    <div *ngFor="let path of guideSupportPaths" class="relative rounded-lg bg-white/60 p-3 dark:bg-white/[0.025]"><span class="absolute -left-[1.32rem] top-4 h-2 w-2 rounded-full bg-amber-500"></span><p class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ path.problem }}</p><p class="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{{ path.next }}</p></div>
+                                </div>
+                            </section>
+                        </div>
                         <section class="mt-6 rounded-2xl border border-slate-200/70 dark:border-white/10 p-4 sm:p-5">
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>How to use this tab</h4>
                             <ol class="mt-4 space-y-3">
