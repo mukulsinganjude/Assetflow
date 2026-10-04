@@ -6,13 +6,14 @@ import { AuthService } from '../../services/auth.service';
 import { UiService } from '../../services/ui.service';
 import { Asset, AuditScan, AuditSession } from '../../models/models';
 import { exportXlsx } from '../../services/util';
+import { AssignModalComponent } from '../shared/assign-modal.component';
 
 declare const Html5Qrcode: any;
 
 @Component({
   selector: 'app-audit',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AssignModalComponent],
   templateUrl: './audit.component.html'
 })
 export class AuditComponent implements OnDestroy {
@@ -25,6 +26,7 @@ export class AuditComponent implements OnDestroy {
   scanner: any = null;
   scanning = signal(false);
   cameraError = signal('');
+  handoverAssetId = signal<number | null>(null);
   private lastScanText = '';
   private lastScanAt = 0;
 
@@ -173,6 +175,12 @@ export class AuditComponent implements OnDestroy {
     this.scanning.set(false);
   }
 
+  openHandover(assetId: number) {
+    if (!this.auth.can('assets.assign')) { this.ui.error('Your account does not have permission to record a handover.'); return; }
+    this.handoverAssetId.set(assetId);
+  }
+  closeHandover() { this.handoverAssetId.set(null); }
+
   // ---- History view ----
   openHistory(s: AuditSession) { this.viewingId.set(s.id); }
   closeHistory() { this.viewingId.set(null); }
@@ -190,4 +198,3 @@ export class AuditComponent implements OnDestroy {
     exportXlsx(rows, 'Reconciliation', `AssetFlow_Audit_${s.id}.xlsx`);
   }
 }
-

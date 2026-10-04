@@ -129,6 +129,7 @@ function seed() {
         action: `Registered · ${a.status} · assigned to ${normalizeStockValue(a.assignedTo) || STOCK_LABEL}`
       }]
     })),
+    deletedRecords: [],
     users: initialUsers,
     logs: [{ timestamp: new Date().toLocaleString(), user: 'System', action: 'Enterprise cluster telemetry initialized.' }],
     employeeComments: {},
@@ -198,6 +199,11 @@ function normalizeState(state) {
   if (!Array.isArray(state.users)) state.users = [];
   removeLegacyDemoAccounts(state);
   if (!Array.isArray(state.assets)) state.assets = [];
+  if (!Array.isArray(state.deletedRecords)) state.deletedRecords = [];
+  if (state.deletedRecords.length) {
+    const maxDeletedId = state.deletedRecords.reduce((max, row) => Math.max(max, Number(row?.id) || 0), 0);
+    state.seq = Math.max(Number(state.seq) || 1000, maxDeletedId);
+  }
   state.assets.forEach(asset => {
     if (!asset || typeof asset !== 'object') return;
     if (!['Primary', 'Temporary'].includes(asset.assignmentType)) asset.assignmentType = 'Primary';

@@ -6,6 +6,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Browse, search, and manage all registered IT hardware and office equipment.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+        <button *ngIf="canManageArchive" type="button" (click)="openRecoveryArchive()" class="glass-card hover:text-indigo-400 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-xs"><i class="fa-solid fa-box-archive"></i><span>Recovery archive</span></button>
         <button *ngIf="canImport" (click)="downloadTemplate()" class="glass-card hover:text-indigo-400 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-2 transition text-xs">
           <i class="fa-solid fa-file-arrow-down"></i><span>Template</span>
         </button>
@@ -390,6 +391,28 @@
       <button type="button" (click)="closeHistory()" class="w-full glass-card py-3 rounded-2xl text-xs font-semibold">Close</button>
     </div>
   </div>
+</div>
+
+<!-- ADMIN RECOVERY ARCHIVE -->
+<div *ngIf="archiveOpen()" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-md sm:p-6" (click)="archiveOpen.set(false)">
+  <section role="dialog" aria-modal="true" aria-label="Recovery archive" class="glass-card flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between border-b border-slate-200/60 p-5 dark:border-white/10">
+      <div><h2 class="text-lg font-black text-slate-900 dark:text-white"><i class="fa-solid fa-box-archive mr-2 text-indigo-500"></i>Recovery archive</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Restore assets and employee records removed by mistake. Restores are recorded in System Activity.</p></div>
+      <button type="button" (click)="archiveOpen.set(false)" class="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-200/70 dark:hover:bg-white/10" aria-label="Close recovery archive"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    <p *ngIf="archiveError()" class="m-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-500">{{ archiveError() }}</p>
+    <div class="min-h-32 overflow-y-auto p-4 sm:p-5">
+      <p *ngIf="archiveLoading()" class="py-10 text-center text-sm text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading archived records…</p>
+      <p *ngIf="!archiveLoading() && !archiveError() && data.recoveryArchive().length === 0" class="py-12 text-center text-sm text-slate-500">The recovery archive is empty.</p>
+      <div *ngIf="!archiveLoading() && data.recoveryArchive().length" class="space-y-2">
+        <article *ngFor="let row of data.recoveryArchive()" class="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 dark:border-white/10 sm:flex-row sm:items-center">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500"><i class="fa-solid" [ngClass]="row.type === 'asset' ? 'fa-laptop' : 'fa-user'"></i></span>
+          <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold text-slate-900 dark:text-white">{{ row.record.name }} <span *ngIf="row.type === 'asset'" class="font-mono text-xs font-medium text-slate-500">· {{ row.record.serial }}</span></p><p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{{ row.type === 'asset' ? 'Asset' : 'Employee' }} · Removed {{ row.deletedAt | date:'medium' }} by {{ row.deletedBy }}</p></div>
+          <button type="button" (click)="restoreArchived(row)" [disabled]="restoringRecord() === row.id" class="shrink-0 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"><i class="fa-solid mr-1.5" [ngClass]="restoringRecord() === row.id ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>Restore</button>
+        </article>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- COMMENTS MODAL -->

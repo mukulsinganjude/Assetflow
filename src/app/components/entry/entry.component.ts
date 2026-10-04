@@ -49,6 +49,10 @@ export class EntryComponent implements OnDestroy {
 
   // confirm modal
   confirmOpen = signal(false);
+  archiveOpen = signal(false);
+  archiveLoading = signal(false);
+  archiveError = signal('');
+  restoringRecord = signal<number | null>(null);
   assignmentWarnings = signal<string[]>([]);
   // add-equipment modal (the registration form opens in a popup)
   addOpen = signal(false);
@@ -415,6 +419,7 @@ export class EntryComponent implements OnDestroy {
   get canDelete() { return this.auth.can('assets.delete'); }
   get canImport() { return this.auth.can('assets.import'); }
   get canExport() { return this.auth.can('assets.export'); }
+  get canManageArchive() { return this.auth.isAdmin(); }
 
   /** Download a blank asset sheet to fill in and re-import. Dates are omitted —
    *  they are managed separately in the Warranty & Predictive Forecasting module. */
@@ -552,21 +557,37 @@ export class EntryComponent implements OnDestroy {
 
   async bulkDelete() {
     if (!this.auth.can('assets.delete')) return;
-    const ok = await this.ui.confirm({ title: 'Delete assets', message: `Delete ${this.selected().size} selected item(s)? This cannot be undone.`, confirmLabel: 'Delete', danger: true });
+    const ok = await this.ui.confirm({ title: 'Move assets to recovery archive', message: `Move ${this.selected().size} selected item(s) to the admin recovery archive? They can be restored later.`, confirmLabel: 'Move to archive', danger: true });
     if (!ok) return;
     const count = await this.data.bulkDelete(this.selected());
     this.selected.set(new Set());
-    this.ui.success(`Deleted ${count} item(s).`);
+    this.ui.success(`Moved ${count} item(s) to the recovery archive.`);
+  }
+
+  async openRecoveryArchive() {
+    this.archiveOpen.set(true); this.archiveLoading.set(true); this.archiveError.set('');
+    try { await this.data.loadRecoveryArchive(); }
+    catch (error) { this.archiveError.set(error instanceof Error ? error.message : 'Could not load the recovery archive.'); }
+    finally { this.archiveLoading.set(false); }
+  }
+
+  async restoreArchived(row: { id: number; type: string; record: any }) {
+    if (!this.auth.isAdmin()) return;
+    this.restoringRecord.set(row.id);
+    const result = await this.data.restoreArchivedRecord(row.id);
+    this.restoringRecord.set(null);
+    if (!result.ok) { this.archiveError.set(result.error || 'Could not restore the record.'); return; }
+    this.ui.success(`${row.type === 'asset' ? row.record.name : row.record.name} restored. The audit log records who restored it.`);
   }
   async deleteAsset(id: number) {
     if (!this.auth.can('assets.delete')) return;
     const asset = this.data.assets().find(a => a.id === id);
     const label = asset ? `"${asset.name}" (${asset.serial})` : 'this asset';
-    const ok = await this.ui.confirm({ title: 'Delete asset', message: `Delete ${label}? This cannot be undone.`, confirmLabel: 'Delete', danger: true });
+    const ok = await this.ui.confirm({ title: 'Move asset to recovery archive', message: `Move ${label} to the admin recovery archive? It can be restored later.`, confirmLabel: 'Move to archive', danger: true });
     if (!ok) return;
     const res = await this.data.deleteAsset(id);
     if (!res.ok) this.ui.error(res.error || 'Could not delete the asset.');
-    else this.ui.success('Asset deleted.');
+    else this.ui.success('Asset moved to the recovery archive.');
   }
 
   // ---- History timeline ----

@@ -76,10 +76,14 @@
                         <div><h2 class="text-sm font-bold">Who's online</h2><p class="text-[10px] text-slate-500 dark:text-slate-400">People active on AssetFlow</p></div>
                         <span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{{ presence.onlinePeople().length }} online</span>
                     </div>
+                    <div class="flex items-center justify-between gap-3 border-b border-slate-200/70 px-4 py-2.5 dark:border-white/10">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400">{{ presence.hidden() ? 'Your presence is hidden' : 'Your presence is visible' }}</span>
+                        <button type="button" (click)="presence.toggleHidden()" class="text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{{ presence.hidden() ? 'Show me online' : 'Hide me' }}</button>
+                    </div>
                     <div *ngIf="presence.onlinePeople().length; else noOnlinePeople" class="notification-list max-h-[min(60vh,24rem)] divide-y divide-slate-200/70 overflow-y-auto dark:divide-white/10">
                         <div *ngFor="let person of presence.onlinePeople()" class="flex items-center gap-3 px-4 py-3">
                             <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-600 dark:text-indigo-300">{{ person.displayName.charAt(0).toUpperCase() }}<span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900"></span></span>
-                            <span class="min-w-0 flex-1"><span class="block truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{{ person.displayName }}</span><span class="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">{{ person.title || 'Online now' }}</span></span>
+                            <span class="min-w-0 flex-1"><span class="block truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{{ person.displayName }}</span><span class="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">{{ person.title || 'Online now' }} · {{ presenceLastUpdated(person.lastSeen) }}</span></span>
                             <span class="shrink-0 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">Online</span>
                         </div>
                     </div>

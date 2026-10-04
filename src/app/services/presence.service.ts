@@ -11,6 +11,7 @@ export interface OnlinePerson {
 @Injectable({ providedIn: 'root' })
 export class PresenceService {
   readonly onlinePeople = signal<OnlinePerson[]>([]);
+  readonly hidden = signal(this.readHidden());
   private sessionId = '';
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -19,6 +20,10 @@ export class PresenceService {
       void this.announce();
     }
   };
+
+  private readHidden(): boolean {
+    try { return localStorage.getItem('assetflow-hide-presence') === 'true'; } catch { return false; }
+  }
 
   constructor(private api: ApiService) {}
 
@@ -49,7 +54,7 @@ export class PresenceService {
 
   private async sendHeartbeat() {
     if (!this.sessionId) return;
-    try { await firstValueFrom(this.api.post<{ ok: boolean }>('/presence/heartbeat', { sessionId: this.sessionId })); }
+    try { await firstValueFrom(this.api.post<{ ok: boolean }>('/presence/heartbeat', { sessionId: this.sessionId, hidden: this.hidden() })); }
     catch { /* A temporary network error is recovered by the next heartbeat. */ }
   }
 
@@ -64,4 +69,12 @@ export class PresenceService {
   }
 
   refreshNow() { void this.refresh(); }
+
+  toggleHidden() {
+    const hidden = !this.hidden();
+    this.hidden.set(hidden);
+    try { localStorage.setItem('assetflow-hide-presence', String(hidden)); } catch { /* Preference lasts for this session if storage is unavailable. */ }
+    void this.sendHeartbeat();
+    void this.refresh();
+  }
 }

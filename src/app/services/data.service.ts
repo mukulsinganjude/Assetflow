@@ -18,6 +18,14 @@ export const CATEGORIES = ['Laptop', 'Monitor', 'Mouse', 'Docking Station', 'Hea
 export const DEPARTMENTS = ['IT', 'BPS', 'HR', 'Finance', 'Admin'];
 export const STATUSES = ['In Use', 'In Storage', 'Under Repair'];
 
+export interface ArchivedRecord {
+  id: number;
+  type: 'asset' | 'employee';
+  record: any;
+  deletedAt: string;
+  deletedBy: string;
+}
+
 type Result = { ok: boolean; error?: string; asset?: Asset };
 
 /**
@@ -64,6 +72,7 @@ export class DataService {
   formerEmployees = signal<FormerEmployeeRecord[]>([]);
   offboardingChecklists = signal<OffboardingChecklist[]>([]);
   formerEmployeesError = signal('');
+  recoveryArchive = signal<ArchivedRecord[]>([]);
   dellCases = signal<DellCase[]>([]);
   /** Index Dell cases by normalized asset serial. Asset rows read this during
    *  change detection, so precompute the join once per case-list update instead
@@ -121,6 +130,7 @@ export class DataService {
     this.dellCasesError.set('');
     this.quickLinksError.set('');
     this.assetsLoading.set(true);
+    this.recoveryArchive.set([]);
   }
 
   async loadAssets(): Promise<void> {
@@ -365,6 +375,19 @@ export class DataService {
       await this.loadAssets();
       return { ok: true };
     } catch (e) { return { ok: false, error: errorMessage(e, 'Could not delete the asset.') }; }
+  }
+
+  async loadRecoveryArchive(): Promise<void> {
+    try { this.recoveryArchive.set(await firstValueFrom(this.api.get<ArchivedRecord[]>('/recovery-archive'))); }
+    catch (e) { throw new Error(errorMessage(e, 'Could not load the recovery archive.')); }
+  }
+
+  async restoreArchivedRecord(id: number): Promise<Result> {
+    try {
+      await firstValueFrom(this.api.post(`/recovery-archive/${id}/restore`, {}));
+      await Promise.all([this.loadRecoveryArchive(), this.loadAssets(), this.loadEmployees()]);
+      return { ok: true };
+    } catch (e) { return { ok: false, error: errorMessage(e, 'Could not restore this record.') }; }
   }
 
   /** Check-in / check-out a single asset: reassign to a person or storage, with an

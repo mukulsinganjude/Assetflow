@@ -107,9 +107,9 @@
         <div class="space-y-1.5">
           <p class="text-xs font-bold text-emerald-500 uppercase"><i class="fa-solid fa-circle-check mr-1"></i>Verified present ({{ verifiedAssets().length }})</p>
           <p *ngIf="verifiedAssets().length === 0" class="text-xs text-slate-500 dark:text-slate-400">Nothing scanned yet.</p>
-          <div *ngFor="let a of verifiedAssets()" class="text-xs glass-card rounded-xl px-3 py-2 flex items-center justify-between text-slate-700 dark:text-slate-200">
-            <span><span class="font-semibold">{{ a.name }}</span> · <span class="font-mono text-indigo-400">{{ a.serial }}</span></span>
-            <i class="fa-solid fa-check text-emerald-500"></i>
+          <div *ngFor="let a of verifiedAssets()" class="text-xs glass-card rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-slate-700 dark:text-slate-200">
+            <span><span class="font-semibold">{{ a.name }}</span> · <span class="font-mono text-indigo-400">{{ a.serial }}</span><span class="block mt-1 text-[10px] text-slate-500">{{ a.status }} · {{ a.assignedTo || 'Stock' }}</span></span>
+            <span class="flex items-center gap-2"><button *ngIf="auth.can('assets.assign')" type="button" (click)="openHandover(a.id)" class="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-indigo-700"><i class="fa-solid fa-arrow-right-arrow-left mr-1"></i>Handover</button><i class="fa-solid fa-check text-emerald-500"></i></span>
           </div>
         </div>
 
@@ -146,6 +146,8 @@
     </div>
   </div>
 </div>
+
+<app-assign-modal [assetId]="handoverAssetId()" (closed)="closeHandover()"></app-assign-modal>
 
 <!-- ============ COMPLETED-AUDIT REPORT MODAL ============ -->
 <div *ngIf="viewing() as v" (click)="closeHistory()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fade-in">

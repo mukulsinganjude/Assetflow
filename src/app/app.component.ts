@@ -590,6 +590,13 @@ export class AppComponent {
     if (this.presenceOpen) { this.presence.refreshNow(); this.closeNotifications(); this.closeProfileMenu(); }
   }
   closePresence() { this.presenceOpen = false; }
+  presenceLastUpdated(value: string): string {
+    const elapsed = Math.max(0, Date.now() - new Date(value).getTime());
+    if (!Number.isFinite(elapsed)) return 'Last updated time unavailable';
+    if (elapsed < 60_000) return `Updated ${Math.max(1, Math.floor(elapsed / 1000))} sec ago`;
+    if (elapsed < 3_600_000) return `Updated ${Math.floor(elapsed / 60_000)} min ago`;
+    return `Updated ${new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
   notificationId(event: { asset: { id: number; serial: string }; ts: string; user: string; action: string }): string {
     return `${event.asset.id}|${event.asset.serial}|${event.ts}|${event.user}|${event.action}`;
   }

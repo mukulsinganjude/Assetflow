@@ -238,7 +238,7 @@ const cleanPresenceSessions = () => {
 app.post('/api/presence/heartbeat', (req, res) => {
   const sessionId = clean(req.body.sessionId, 64);
   if (!/^[a-zA-Z0-9-]{16,64}$/.test(sessionId)) return res.status(400).json({ error: 'A valid browser session is required.' });
-  presenceSessions.set(sessionId, { username: req.user.username, lastSeen: Date.now() });
+  presenceSessions.set(sessionId, { username: req.user.username, lastSeen: Date.now(), hidden: req.body.hidden === true });
   cleanPresenceSessions();
   res.json({ ok: true });
 });
@@ -252,6 +252,7 @@ app.get('/api/presence', (req, res) => {
   cleanPresenceSessions();
   const latestByUser = new Map();
   for (const session of presenceSessions.values()) {
+    if (session.hidden) continue;
     const key = session.username.toLowerCase();
     const previous = latestByUser.get(key);
     if (!previous || session.lastSeen > previous.lastSeen) latestByUser.set(key, session);
@@ -473,12 +474,36 @@ app.put('/api/assets/:id', canWrite, (req, res) => {
 
 app.delete('/api/assets/:id', requireRole('admin'), (req, res) => {
   const id = Number(req.params.id);
-  const before = store.db.assets.length;
-  store.db.assets = store.db.assets.filter(a => a.id !== id);
-  if (store.db.assets.length === before) return res.status(404).json({ error: 'Asset not found.' });
-  store.addLog(req.user.username, `Deleted asset id ${id}`);
+  const index = store.db.assets.findIndex(a => a.id === id);
+  if (index < 0) return res.status(404).json({ error: 'Asset not found.' });
+  const [record] = store.db.assets.splice(index, 1);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'asset', record, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved asset ${record.name} (${record.serial}) to the recovery archive`);
   store.persist();
   res.json({ ok: true });
+});
+
+app.get('/api/recovery-archive', requireRole('admin'), (req, res) => res.json(store.db.deletedRecords || []));
+app.post('/api/recovery-archive/:id/restore', requireRole('admin'), (req, res) => {
+  const index = (store.db.deletedRecords || []).findIndex(row => Number(row.id) === Number(req.params.id));
+  if (index < 0) return res.status(404).json({ error: 'Archived record not found.' });
+  const archived = store.db.deletedRecords[index];
+  if (archived.type === 'asset') {
+    const record = archived.record;
+    if ((store.db.assets || []).some(asset => String(asset.serial || '').trim().toLowerCase() === String(record.serial || '').trim().toLowerCase())) {
+      return res.status(409).json({ error: `Cannot restore: serial ${record.serial} is already in active inventory.` });
+    }
+    store.db.assets.push(record);
+  } else if (archived.type === 'employee') {
+    const record = archived.record;
+    if ((store.db.employees || []).some(employee => employee.name.toLowerCase() === record.name.toLowerCase())) return res.status(409).json({ error: `Cannot restore: employee ${record.name} already exists.` });
+    store.db.employees.push(record);
+  } else return res.status(400).json({ error: 'This archived record type cannot be restored.' });
+  store.db.deletedRecords.splice(index, 1);
+  store.addLog(req.user.username, `Restored ${archived.type} ${archived.type === 'asset' ? `${archived.record.name} (${archived.record.serial})` : archived.record.name} from recovery archive`);
+  store.persist();
+  res.json({ ok: true, restoredBy: req.user.displayName || req.user.username });
 });
 
 // Check-in / check-out: reassign a single asset to a person or back to storage,
@@ -778,7 +803,9 @@ app.delete('/api/employees/:name', requireRole('admin'), (req, res) => {
   const held = store.db.assets.filter(a => String(a.assignedTo || '').trim().toLowerCase() === store.db.employees[idx].name.trim().toLowerCase()).length;
   if (held > 0) return res.status(409).json({ error: `Cannot remove — ${held} asset(s) are still assigned to this employee.` });
   const [removed] = store.db.employees.splice(idx, 1);
-  store.addLog(req.user.username, `Removed employee: ${removed.name}`);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  store.db.deletedRecords.unshift({ id: store.nextId(), type: 'employee', record: removed, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  store.addLog(req.user.username, `Moved employee ${removed.name} to the recovery archive`);
   store.persist();
   res.json({ ok: true });
 });
@@ -879,10 +906,12 @@ app.post('/api/assets/bulk-assign', canWrite, (req, res) => {
 
 app.post('/api/assets/bulk-delete', requireRole('admin'), (req, res) => {
   const ids = new Set(asNumIds(req.body));
-  const before = store.db.assets.length;
+  const removed = store.db.assets.filter(a => ids.has(a.id));
   store.db.assets = store.db.assets.filter(a => !ids.has(a.id));
-  const count = before - store.db.assets.length;
-  store.addLog(req.user.username, `Bulk deleted ${count} assets`);
+  if (!Array.isArray(store.db.deletedRecords)) store.db.deletedRecords = [];
+  for (const record of removed) store.db.deletedRecords.unshift({ id: store.nextId(), type: 'asset', record, deletedAt: new Date().toISOString(), deletedBy: req.user.displayName || req.user.username });
+  const count = removed.length;
+  store.addLog(req.user.username, `Moved ${count} asset(s) to the recovery archive`);
   store.persist();
   res.json({ ok: true, count });
 });
@@ -1621,6 +1650,7 @@ app.get('/api/backup', requireRole('admin'), (req, res) => {
     dellCases: store.db.dellCases || [],
     quickLinks: store.db.quickLinks || [],
     employees: store.db.employees || [],
+    deletedRecords: store.db.deletedRecords || [],
     logs: store.db.logs
   };
   store.addLog(req.user.username, 'Downloaded a data backup snapshot');
@@ -1751,6 +1781,26 @@ app.post('/api/restore', requireRole('admin'), (req, res) => {
       return { id: Number(row.id) || store.nextId(), name: clean(row.name, 100), url: url.toString(), purpose: clean(row.purpose, 300), createdBy: clean(row.createdBy, 80) || 'Imported backup', createdAt: row.createdAt || new Date().toISOString() };
     }).filter(Boolean);
   }
+  if (Array.isArray(snap.deletedRecords)) {
+    const safeDeleted = [];
+    for (const raw of snap.deletedRecords.slice(0, 10000)) {
+      if (!raw || !['asset', 'employee'].includes(raw.type) || !raw.record || typeof raw.record !== 'object') continue;
+      let record;
+      if (raw.type === 'asset') {
+        const validated = validateAsset(raw.record, { requireDates: false });
+        if (!validated.ok) continue;
+        record = { id: Number(raw.record.id) || store.nextId(), ...validated.value };
+        if (Array.isArray(raw.record.history)) record.history = raw.record.history.map(normalizeStockHistory);
+        if (Array.isArray(raw.record.comments)) record.comments = raw.record.comments;
+      } else {
+        const name = clean(raw.record.name, 80);
+        if (!name) continue;
+        record = { ...raw.record, name, department: clean(raw.record.department, 80), cciId: clean(raw.record.cciId, 32) };
+      }
+      safeDeleted.push({ id: Number(raw.id) > 0 ? Number(raw.id) : store.nextId(), type: raw.type, record, deletedAt: clean(raw.deletedAt, 40) || new Date().toISOString(), deletedBy: clean(raw.deletedBy, 100) || 'Imported backup' });
+    }
+    store.db.deletedRecords = safeDeleted;
+  }
   if (Array.isArray(snap.logs)) store.db.logs = snap.logs.slice(0, 200).map(row => ({ ...row, action: typeof row?.action === 'string' ? row.action.replace(/\bUnassigned\b/gi, STOCK) : row?.action }));
   // Keep the id sequence ahead of any restored id so new records never collide.
   const maxAssetId = cleanAssets.reduce((m, a) => Math.max(m, a.id), 0);
@@ -1759,7 +1809,8 @@ app.post('/api/restore', requireRole('admin'), (req, res) => {
   const maxFormerId = (store.db.formerEmployees || []).reduce((m, row) => Math.max(m, Number(row.id) || 0), 0);
   const maxCaseId = (store.db.dellCases || []).reduce((m, row) => Math.max(m, Number(row.id) || 0), 0);
   const maxLinkId = (store.db.quickLinks || []).reduce((m, row) => Math.max(m, Number(row.id) || 0), 0);
-  store.db.seq = Math.max(Number(snap.seq) || 0, maxAssetId, maxConsId, maxDeskId, maxFormerId, maxCaseId, maxLinkId, store.db.seq || 1000);
+  const maxDeletedId = (store.db.deletedRecords || []).reduce((m, row) => Math.max(m, Number(row.id) || 0, Number(row.record?.id) || 0), 0);
+  store.db.seq = Math.max(Number(snap.seq) || 0, maxAssetId, maxConsId, maxDeskId, maxFormerId, maxCaseId, maxLinkId, maxDeletedId, store.db.seq || 1000);
   store.addLog(req.user.username, `Restored data snapshot: ${cleanAssets.length} asset(s)` + (skipped ? `, ${skipped} skipped` : ''));
   store.persist();
   res.json({ ok: true, restored: cleanAssets.length, skipped });
