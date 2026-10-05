@@ -5,10 +5,10 @@
         <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">System Users Management</h2>
         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Manage account details, titles, passwords, and access roles for all users.</p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="openSignInHistory()" class="glass-card px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-sm"><i class="fa-solid fa-clock-rotate-left text-indigo-500"></i><span>Sign-in History</span></button>
-        <button type="button" (click)="openAccess()" class="glass-card px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-sm"><i class="fa-solid fa-shield-halved text-indigo-500"></i><span>Manage Access</span></button>
-        <button (click)="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-1.5 transition text-sm shadow-lg"><i class="fa-solid fa-user-plus"></i><span>Add New User</span></button>
+      <div class="flex max-w-full flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-1">
+        <button type="button" (click)="openSignInHistory()" class="glass-card shrink-0 px-2 sm:px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition text-[11px] sm:text-xs whitespace-nowrap"><i class="fa-solid fa-clock-rotate-left text-indigo-500"></i><span class="sm:hidden">Sign-ins</span><span class="hidden sm:inline">Sign-in History</span></button>
+        <button type="button" (click)="openAccess()" class="glass-card shrink-0 px-2 sm:px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition text-[11px] sm:text-xs whitespace-nowrap"><i class="fa-solid fa-shield-halved text-indigo-500"></i><span class="sm:hidden">Access</span><span class="hidden sm:inline">Manage Access</span></button>
+        <button type="button" (click)="openModal()" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-2 sm:px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition text-[11px] sm:text-xs shadow-lg whitespace-nowrap"><i class="fa-solid fa-user-plus"></i><span class="sm:hidden">Add User</span><span class="hidden sm:inline">Add New User</span></button>
       </div>
     </div>
     <div class="overflow-x-auto rounded-xl">
