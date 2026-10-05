@@ -466,11 +466,13 @@ html.dark body ::-webkit-scrollbar-thumb { background: #555; }
 /* Desktop sidebar collapse control and icon-only navigation state. */
 @media (min-width: 768px) {
     .assetflow-shell aside.glass-nav {
-        transition: width .2s ease, flex-basis .2s ease, transform .3s ease;
+        flex: 0 0 12rem;
+        will-change: flex-basis;
+        transition: flex-basis .24s cubic-bezier(.22, .75, .25, 1);
     }
     .assetflow-shell aside.glass-nav.sidebar-collapsed {
-        width: 5rem !important;
         flex: 0 0 5rem;
+        width: 5rem !important;
     }
     .assetflow-shell aside.sidebar-collapsed .sidebar-body {
         padding: .75rem !important;
@@ -524,6 +526,22 @@ html.dark body ::-webkit-scrollbar-thumb { background: #555; }
         width: 2.5rem;
         height: 2.5rem;
         padding: 0;
+    }
+    .assetflow-shell aside.glass-nav nav a,
+    .assetflow-shell aside.glass-nav nav > .sidebar-sort-row > div > button,
+    .assetflow-shell aside.glass-nav .sidebar-footer,
+    .assetflow-shell aside.glass-nav .sidebar-edit-toggle,
+    .assetflow-shell aside.glass-nav .sidebar-collapse-button {
+        transition: padding .2s ease, gap .2s ease, margin .2s ease, border-radius .2s ease, background-color .16s ease, color .16s ease;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .assetflow-shell aside.glass-nav,
+    .assetflow-shell aside.glass-nav * {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -1025,6 +1043,10 @@ html:not(.dark) .assetflow-shell aside nav a.bg-gradient-to-r {
 .assetflow-shell aside nav a.bg-gradient-to-r > i { color: var(--af-warm) !important; }
 .assetflow-shell .sidebar-footer {
     border-top-color: var(--af-border) !important;
+}
+.assetflow-shell aside .sidebar-footer {
+    border-color: rgba(83, 151, 204, .55) !important;
+    box-shadow: inset 0 0 0 1px rgba(83, 151, 204, .08) !important;
 }
 
 .glass-card,
