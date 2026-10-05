@@ -70,6 +70,11 @@ export class UsersComponent implements OnInit {
       asc ? val(a).localeCompare(val(b)) : val(b).localeCompare(val(a)));
   });
 
+  /** Recent authentication events are shown separately from routine asset activity. */
+  signInHistory = computed(() => this.data.auditLogs()
+    .filter(log => log.action === 'User logged in' || log.action === 'User logged out' || /^Sign-in failed \(attempt \d+\)$/.test(log.action) || /^Login locked after \d+ failed attempts$/.test(log.action))
+    .slice(0, 12));
+
   sort(field: string) {
     if (this.sortField() === field) this.sortAsc.set(!this.sortAsc());
     else { this.sortField.set(field); this.sortAsc.set(true); }
@@ -77,7 +82,25 @@ export class UsersComponent implements OnInit {
 
   constructor(public data: DataService, public auth: AuthService, private ui: UiService) {}
 
-  ngOnInit() { this.data.loadUsers(); }
+  ngOnInit() { void Promise.all([this.data.loadUsers(), this.data.loadLogs()]); }
+
+  refreshSignInHistory() { void this.data.loadLogs(); }
+  securityEventLabel(action: string): string {
+    if (action === 'User logged in') return 'Signed in';
+    if (action === 'User logged out') return 'Signed out';
+    if (action.startsWith('Sign-in failed')) return 'Failed sign-in attempt';
+    return 'Sign-in blocked after repeated failures';
+  }
+  securityEventIcon(action: string): string {
+    if (action === 'User logged in') return 'fa-arrow-right-to-bracket text-emerald-500';
+    if (action === 'User logged out') return 'fa-arrow-right-from-bracket text-slate-400';
+    if (action.startsWith('Sign-in failed')) return 'fa-triangle-exclamation text-amber-500';
+    return 'fa-shield-halved text-amber-500';
+  }
+  securityEventTime(timestamp: string): string {
+    const parsed = new Date(timestamp);
+    return Number.isNaN(parsed.getTime()) ? timestamp : parsed.toLocaleString();
+  }
 
   openAccess(user?: User) {
     if (!this.auth.isAdmin()) return;

@@ -100,7 +100,7 @@ export class DataService {
     else if (route === '/warranty') await Promise.all([this.loadAssets(), this.loadDellCases()]);
     else if (route === '/links') await this.loadQuickLinks();
     else if (route === '/logs') await this.loadLogs();
-    else if (route === '/users') await this.loadUsers();
+    else if (route === '/users') await Promise.all([this.loadUsers(), this.loadLogs()]);
   }
 
   assets = signal<Asset[]>([]);

@@ -204,11 +204,12 @@ app.post('/api/auth/login', async (req, res) => {
     if (rec && rec.lockedUntil && rec.lockedUntil <= now) count = 0;
     count += 1;
     const next = { count, lockedUntil: 0, updated: now };
+    store.addLog(email || 'unknown', `Sign-in failed (attempt ${count})`);
     if (count >= LOGIN_MAX_FAILS) {
       next.lockedUntil = now + LOGIN_LOCK_MS;
       store.addLog(email || 'unknown', `Login locked after ${count} failed attempts`);
-      store.persist();
     }
+    store.persist();
     loginFails.set(key, next);
     return res.status(401).json({ error: 'Invalid company email or password.' });
   }
@@ -367,6 +368,14 @@ app.get('/api/auth/profile', (req, res) => {
   const user = findUser(req.user.username);
   if (!user) return res.status(404).json({ error: 'User account not found.' });
   res.json(publicUser(user));
+});
+
+// Record session termination for the admin sign-in history panel. The browser
+// still clears its local session if this best-effort audit write is unavailable.
+app.post('/api/auth/logout', (req, res) => {
+  store.addLog(req.user.username, 'User logged out');
+  store.persist();
+  res.json({ ok: true });
 });
 
 // Small revision token for clients with the app open on another device. It

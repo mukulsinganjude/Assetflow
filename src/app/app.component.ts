@@ -2,11 +2,13 @@ import { Component, computed, ElementRef, effect, HostListener, signal, ViewChil
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { DataService } from './services/data.service';
 import { UiService } from './services/ui.service';
 import { PresenceService } from './services/presence.service';
+import { ApiService } from './services/api.service';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { Asset, HistoryEntry } from './models/models';
 
@@ -439,6 +441,7 @@ export class AppComponent {
     public data: DataService,
     public ui: UiService,
     public presence: PresenceService,
+    private api: ApiService,
     private router: Router
   ) {
     this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder();
@@ -552,20 +555,22 @@ export class AppComponent {
   }
 
   get roleLabel(): string { return this.auth.currentUser()?.role ?? ''; }
-  get accountTitleLabel(): string {
-    const user = this.auth.currentUser();
-    if (!user) return '';
-    const title = this.data.users().find(row => row.username === user.username)?.title || user.title;
-    return title?.trim() || 'Title not set';
-  }
   get username(): string { return this.auth.currentUser()?.username ?? 'User'; }
-  get email(): string { return this.auth.currentUser()?.email ?? ''; }
   get displayName(): string { return this.auth.currentUser()?.displayName || this.username; }
   get profilePhoto(): string { return this.auth.currentUser()?.profileImage || ''; }
   get avatar(): string {
     const initials = this.displayName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]);
     return (initials.join('') || 'U').toUpperCase();
   }
+
+  get accountTitleLabel(): string {
+    const user = this.auth.currentUser();
+    if (!user) return '';
+    const title = this.data.users().find(row => row.username === user.username)?.title || user.title;
+    return title?.trim() || 'Title not set';
+  }
+
+  get email(): string { return this.auth.currentUser()?.email ?? ''; }
 
   async handleLogin() {
     if (this.loggingIn) return;
@@ -590,6 +595,9 @@ export class AppComponent {
   }
 
   handleLogout() {
+    // Subscribe before clearing the token so the auth interceptor can attach it.
+    // Keep logout immediate; a network outage should never trap the user in-app.
+    void firstValueFrom(this.api.post<{ ok: boolean }>('/auth/logout', {})).catch(() => {});
     this.presence.stop();
     this.auth.logout();
     this.router.navigate(['/']);
@@ -652,6 +660,7 @@ export class AppComponent {
     }
     const key = event.key.toLowerCase();
     if (event.key === '?') { event.preventDefault(); this.openShortcuts(); }
+    else if (key === 'h') { event.preventDefault(); this.openGuide(); }
     else if (key === 'g') {
       event.preventDefault();
       this.navLeaderActive = true;
@@ -669,6 +678,7 @@ export class AppComponent {
     { title: 'General', items: [
       { keys: ['Ctrl', 'K'], label: 'Open command palette' },
       { keys: ['?'], label: 'Show keyboard shortcuts' },
+      { keys: ['H'], label: 'Open website guide' },
       { keys: ['T'], label: 'Toggle light / dark theme' },
       { keys: ['Esc'], label: 'Close dialogs and menus' },
     ]},
@@ -681,6 +691,11 @@ export class AppComponent {
       { keys: ['G', 'C'], label: 'Consumables' },
       { keys: ['G', 'U'], label: 'Users' },
       { keys: ['G', 'L'], label: 'Activity logs' },
+      { keys: ['G', 'S'], label: 'Desk setup' },
+      { keys: ['G', 'K'], label: 'Dell cases' },
+      { keys: ['G', 'M'], label: 'Manage employees' },
+      { keys: ['G', 'F'], label: 'Former employees' },
+      { keys: ['G', 'B'], label: 'Shared links' },
     ]},
   ];
   private navLeaderActive = false;
@@ -688,6 +703,7 @@ export class AppComponent {
   private readonly navShortcutRoutes: Record<string, string> = {
     d: '/dashboard', e: '/employees', n: '/entry', r: '/returns',
     w: '/warranty', c: '/consumables', u: '/users', l: '/logs', s: '/desk-setup', k: '/dell-cases',
+    m: '/manage-employees', f: '/former-employees', b: '/links',
   };
   private clearNavLeader() { this.navLeaderActive = false; if (this.navLeaderTimer) { clearTimeout(this.navLeaderTimer); this.navLeaderTimer = null; } }
   private isTypingTarget(target: EventTarget | null): boolean {
