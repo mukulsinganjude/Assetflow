@@ -48,6 +48,7 @@ export class UsersComponent implements OnInit {
   editSaving = signal(false);
 
   accessOpen = signal(false);
+  signInHistoryOpen = signal(false);
   selectedAccessUser = signal('');
   selectedPermissions = signal<string[]>([]);
   savingPermissions = signal(false);
@@ -82,8 +83,14 @@ export class UsersComponent implements OnInit {
 
   constructor(public data: DataService, public auth: AuthService, private ui: UiService) {}
 
-  ngOnInit() { void Promise.all([this.data.loadUsers(), this.data.loadLogs()]); }
+  ngOnInit() { void this.data.loadUsers(); }
 
+  openSignInHistory() {
+    if (!this.auth.isAdmin()) return;
+    this.signInHistoryOpen.set(true);
+    this.refreshSignInHistory();
+  }
+  closeSignInHistory() { this.signInHistoryOpen.set(false); }
   refreshSignInHistory() { void this.data.loadLogs(); }
   securityEventLabel(action: string): string {
     if (action === 'User logged in') return 'Signed in';

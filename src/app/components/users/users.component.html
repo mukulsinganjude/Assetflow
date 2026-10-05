@@ -6,6 +6,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Manage account details, titles, passwords, and access roles for all users.</p>
       </div>
       <div class="flex flex-wrap gap-2">
+        <button type="button" (click)="openSignInHistory()" class="glass-card px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-sm"><i class="fa-solid fa-clock-rotate-left text-indigo-500"></i><span>Sign-in History</span></button>
         <button type="button" (click)="openAccess()" class="glass-card px-4 py-2.5 rounded-2xl font-semibold flex items-center gap-2 transition text-sm"><i class="fa-solid fa-shield-halved text-indigo-500"></i><span>Manage Access</span></button>
         <button (click)="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl font-semibold flex items-center space-x-1.5 transition text-sm shadow-lg"><i class="fa-solid fa-user-plus"></i><span>Add New User</span></button>
       </div>
@@ -39,32 +40,6 @@
     </div>
   </div>
 
-  <!-- Recent sign-in and session activity (admin only; this route is protected). -->
-  <section class="glass-card p-5 md:p-6 rounded-3xl" aria-labelledby="sign-in-history-title">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-      <div>
-        <h2 id="sign-in-history-title" class="text-lg font-black text-slate-800 dark:text-white"><i class="fa-solid fa-shield-halved text-indigo-500 mr-2" aria-hidden="true"></i>Recent sign-in activity</h2>
-        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Recent successful and failed sign-ins, sign-outs, and lockouts.</p>
-      </div>
-      <button type="button" (click)="refreshSignInHistory()" [disabled]="data.logsLoading()" class="glass-card px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-50" aria-label="Refresh sign-in activity">
-        <i class="fa-solid mr-1" [ngClass]="data.logsLoading() ? 'fa-spinner fa-spin' : 'fa-rotate'" aria-hidden="true"></i>Refresh
-      </button>
-    </div>
-    <p *ngIf="data.logsError()" class="rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-xs text-rose-500">{{ data.logsError() }}</p>
-    <div *ngIf="signInHistory().length === 0 && !data.logsLoading() && !data.logsError()" class="rounded-xl border border-slate-200/60 dark:border-white/10 p-4 text-sm text-slate-500 dark:text-slate-400">
-      No sign-in activity is recorded yet.
-    </div>
-    <div *ngIf="data.logsLoading() && signInHistory().length === 0" class="p-4 text-sm text-slate-500 dark:text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2" aria-hidden="true"></i>Loading sign-in activity…</div>
-    <ol *ngIf="signInHistory().length" class="divide-y divide-slate-200/50 dark:divide-white/10">
-      <li *ngFor="let event of signInHistory()" class="flex items-center gap-3 py-3 first:pt-1 last:pb-1">
-        <span class="w-8 h-8 shrink-0 rounded-xl bg-slate-500/10 flex items-center justify-center"><i class="fa-solid" [ngClass]="securityEventIcon(event.action)" aria-hidden="true"></i></span>
-        <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ data.displayNameFor(event.user) }}</span><span class="block text-xs text-slate-500 dark:text-slate-400">{{ securityEventLabel(event.action) }}</span></span>
-        <time class="shrink-0 text-right text-[11px] text-slate-500 dark:text-slate-400">{{ securityEventTime(event.timestamp) }}</time>
-      </li>
-    </ol>
-    <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">Sign-in activity is included in Activity Trail and retained with the latest audit events.</p>
-  </section>
-
   <!-- Backup & Restore (admin) -->
   <div *ngIf="auth.isAdmin()" class="glass-card p-6 md:p-8 rounded-3xl relative z-10">
     <div class="flex items-center space-x-3 mb-2">
@@ -90,6 +65,37 @@
       </label>
     </div>
   </div>
+</div>
+
+<!-- Sign-in history popup -->
+<div *ngIf="signInHistoryOpen()" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center p-3 sm:p-5 animate-fade-in" (click)="closeSignInHistory()">
+  <section class="glass-card w-full max-w-2xl max-h-[90dvh] rounded-3xl shadow-2xl flex flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="sign-in-history-title" aria-describedby="sign-in-history-description" (click)="$event.stopPropagation()">
+    <header class="shrink-0 p-5 sm:p-6 border-b border-slate-200/50 dark:border-white/10 flex items-start justify-between gap-4">
+      <div>
+        <h2 id="sign-in-history-title" class="text-lg font-black text-slate-800 dark:text-white"><i class="fa-solid fa-shield-halved text-indigo-500 mr-2" aria-hidden="true"></i>Recent sign-in activity</h2>
+        <p id="sign-in-history-description" class="mt-1 text-xs text-slate-500 dark:text-slate-400">Recent successful and failed sign-ins, sign-outs, and lockouts.</p>
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <button type="button" (click)="refreshSignInHistory()" [disabled]="data.logsLoading()" class="glass-card px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-50" aria-label="Refresh sign-in activity">
+          <i class="fa-solid mr-1" [ngClass]="data.logsLoading() ? 'fa-spinner fa-spin' : 'fa-rotate'" aria-hidden="true"></i><span class="hidden sm:inline">Refresh</span>
+        </button>
+        <button type="button" (click)="closeSignInHistory()" class="text-slate-400 hover:text-rose-500 p-2 rounded-xl" aria-label="Close sign-in activity"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <div class="min-h-0 overflow-y-auto p-5 sm:p-6">
+      <p *ngIf="data.logsError()" class="rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-xs text-rose-500">{{ data.logsError() }}</p>
+      <div *ngIf="data.logsLoading() && signInHistory().length === 0" class="p-4 text-sm text-slate-500 dark:text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2" aria-hidden="true"></i>Loading sign-in activity…</div>
+      <div *ngIf="signInHistory().length === 0 && !data.logsLoading() && !data.logsError()" class="rounded-xl border border-slate-200/60 dark:border-white/10 p-4 text-sm text-slate-500 dark:text-slate-400">No sign-in activity is recorded yet.</div>
+      <ol *ngIf="signInHistory().length" class="divide-y divide-slate-200/50 dark:divide-white/10">
+        <li *ngFor="let event of signInHistory()" class="flex items-center gap-3 py-3 first:pt-1 last:pb-1">
+          <span class="w-8 h-8 shrink-0 rounded-xl bg-slate-500/10 flex items-center justify-center"><i class="fa-solid" [ngClass]="securityEventIcon(event.action)" aria-hidden="true"></i></span>
+          <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ data.displayNameFor(event.user) }}</span><span class="block text-xs text-slate-500 dark:text-slate-400">{{ securityEventLabel(event.action) }}</span></span>
+          <time class="shrink-0 text-right text-[11px] text-slate-500 dark:text-slate-400">{{ securityEventTime(event.timestamp) }}</time>
+        </li>
+      </ol>
+      <p class="mt-4 text-[11px] text-slate-500 dark:text-slate-400">Sign-in activity is also included in Activity Trail and retained with the latest audit events.</p>
+    </div>
+  </section>
 </div>
 
 <!-- INDIVIDUAL USER ACCESS PANEL -->
