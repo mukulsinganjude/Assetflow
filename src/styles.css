@@ -463,6 +463,70 @@ html.dark body ::-webkit-scrollbar-thumb { background: #555; }
     html.dark .assetflow-shell header h1 { font-size: 16px; }
 }
 
+/* Desktop sidebar collapse control and icon-only navigation state. */
+@media (min-width: 768px) {
+    .assetflow-shell aside.glass-nav {
+        transition: width .2s ease, flex-basis .2s ease, transform .3s ease;
+    }
+    .assetflow-shell aside.glass-nav.sidebar-collapsed {
+        width: 5rem !important;
+        flex: 0 0 5rem;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-body {
+        padding: .75rem !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-body > div:first-child {
+        display: none !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-logo,
+    .assetflow-shell aside.sidebar-collapsed .sidebar-brand,
+    .assetflow-shell aside.sidebar-collapsed nav span,
+    .assetflow-shell aside.sidebar-collapsed .sidebar-edit-label,
+    .assetflow-shell aside.sidebar-collapsed .sidebar-user > div:nth-child(2),
+    .assetflow-shell aside.sidebar-collapsed nav button > i:last-child {
+        display: none !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed nav a,
+    .assetflow-shell aside.sidebar-collapsed nav > .sidebar-sort-row > div > button {
+        justify-content: center;
+        gap: 0 !important;
+        padding-left: .5rem !important;
+        padding-right: .5rem !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed .assets-submenu {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        border-left: 0 !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-edit-toggle {
+        padding: .55rem !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed > .px-5.pb-1 {
+        justify-content: center;
+        padding-left: .5rem;
+        padding-right: .5rem;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-footer {
+        flex-direction: column;
+        gap: .5rem;
+        margin: .5rem !important;
+        padding: .5rem !important;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-user {
+        justify-content: center;
+        padding-right: 0;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-collapse-control {
+        padding-left: .5rem;
+        padding-right: .5rem;
+    }
+    .assetflow-shell aside.sidebar-collapsed .sidebar-collapse-button {
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+    }
+}
+
 /* Soft glass finish: low-contrast color washes and blur add depth without
    obscuring dense asset tables or reducing label contrast. */
 html.dark body {

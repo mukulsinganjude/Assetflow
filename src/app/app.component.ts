@@ -376,6 +376,7 @@ export class AppComponent {
   forgotOpen = false;
 
   sidebarOpen = false;
+  sidebarCollapsed = false;
   assetsMenuOpen = true;
   profileOpen = false;
   profileMenuOpen = false;
@@ -444,7 +445,7 @@ export class AppComponent {
     private api: ApiService,
     private router: Router
   ) {
-    this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder();
+    this.loadNotificationReadState(); this.loadNotificationDismissState(); this.loadSidebarOrder(); this.loadSidebarCollapsed();
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.presence.start();
@@ -475,6 +476,16 @@ export class AppComponent {
     return [...this.visibleAssetChildren()].sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999));
   }
   private sidebarPreferenceKey() { return `assetflow_sidebar_order_${this.auth.currentUser()?.username || 'guest'}`; }
+  private sidebarCollapsedPreferenceKey() { return `assetflow_sidebar_collapsed_${this.auth.currentUser()?.username || 'guest'}`; }
+  private loadSidebarCollapsed() {
+    try { this.sidebarCollapsed = localStorage.getItem(this.sidebarCollapsedPreferenceKey()) === 'true'; }
+    catch { this.sidebarCollapsed = false; }
+  }
+  toggleSidebarCollapsed() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    try { localStorage.setItem(this.sidebarCollapsedPreferenceKey(), String(this.sidebarCollapsed)); }
+    catch { this.ui.error('Could not save your sidebar preference in this browser.'); }
+  }
   private loadSidebarOrder() {
     this.sidebarOrder = [...this.defaultSidebarOrder];
     this.assetChildOrder = [...this.defaultAssetChildOrder];
@@ -591,6 +602,7 @@ export class AppComponent {
     this.loadNotificationReadState();
     this.loadNotificationDismissState();
     this.loadSidebarOrder();
+    this.loadSidebarCollapsed();
     this.router.navigate(['/dashboard']);
   }
 
